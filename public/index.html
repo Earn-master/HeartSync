@@ -1,0 +1,3206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#ff4b72">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>HeartSync | Connect Deeply</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #ff4b72;
+            --primary-hover: #e03a5f;
+            --primary-light: rgba(255, 75, 114, 0.1);
+            --secondary: #6c5ce7;
+            --secondary-hover: #5b4cc4;
+            --accent: #00cec9;
+            
+            /* Light Mode Variables */
+            --bg-body: #f8f9fa;
+            --bg-surface: #ffffff;
+            --bg-el: #f1f3f5;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --border: #e9ecef;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
+            --radius-sm: 8px;
+            --radius-md: 16px;
+            --radius-lg: 24px;
+            --radius-full: 9999px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg-body: #0f1115;
+            --bg-surface: #161920;
+            --bg-el: #212631;
+            --text-main: #f8f9fa;
+            --text-muted: #a0aec0;
+            --border: #2d3545;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.4);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        button, input, textarea, select {
+            font-family: inherit;
+            font-size: inherit;
+            color: inherit;
+            background: none;
+            border: none;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        /* Utility Classes */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 24px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #ff6b8b);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 75, 114, 0.3);
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 75, 114, 0.4);
+        }
+        .btn-secondary {
+            background-color: var(--bg-el);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover {
+            background-color: var(--border);
+        }
+        .btn-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-full);
+            background-color: var(--bg-surface);
+            box-shadow: var(--shadow-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            transition: var(--transition);
+            border: 1px solid var(--border);
+        }
+        .btn-icon:hover {
+            transform: scale(1.1);
+        }
+
+        /* Toast Notification System */
+        .toast-stack {
+            position: fixed;
+            top: calc(72px + env(safe-area-inset-top));
+            right: 16px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: min(340px, calc(100vw - 32px));
+            pointer-events: none;
+        }
+
+        .toast-item {
+            pointer-events: auto;
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            transform: translateX(120%);
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s ease;
+        }
+
+        .toast-item.toast-visible {
+            transform: translateX(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            width: 36px;
+            height: 36px;
+            min-width: 36px;
+            border-radius: var(--radius-full);
+            background: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .toast-body strong {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 0.9rem;
+            margin-bottom: 2px;
+        }
+
+        .toast-body span {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .toast-close {
+            margin-left: auto;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            padding: 4px;
+        }
+
+        /* Scroll Reveal */
+        .reveal-up {
+            opacity: 0;
+            transform: translateY(32px);
+            transition: opacity 0.7s cubic-bezier(0.4, 0, 0.2, 1), transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal-up.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Trust Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 24px;
+            max-width: 1100px;
+            margin: 0 auto;
+            padding: 32px 5% 8px;
+            text-align: center;
+        }
+
+        .stat-item strong {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 2.1rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-item span {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* FAQ Accordion */
+        .faq-section {
+            max-width: 780px;
+            margin: 0 auto;
+            padding: 20px 5% 80px;
+        }
+
+        .faq-item {
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            margin-bottom: 14px;
+            background-color: var(--bg-surface);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .faq-question {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 20px;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 600;
+            text-align: left;
+        }
+
+        .faq-question i {
+            color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .faq-item.faq-open .faq-question i {
+            transform: rotate(135deg);
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s ease, padding 0.35s ease;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            padding: 0 20px;
+        }
+
+        .faq-item.faq-open .faq-answer {
+            max-height: 200px;
+            padding: 0 20px 18px;
+        }
+
+        /* Layout Architecture */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: calc(56px + env(safe-area-inset-top));
+            padding-top: env(safe-area-inset-top);
+            background-color: var(--bg-surface);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-left: 16px;
+            padding-right: 16px;
+            z-index: 1000;
+            transition: var(--transition);
+        }
+
+        .navbar.navbar-scrolled {
+            height: calc(48px + env(safe-area-inset-top));
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .nav-brand {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            font-weight: 500;
+            color: var(--text-muted);
+            position: relative;
+            padding: 6px 0;
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover, .nav-links.active a {
+            color: var(--text-main);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary);
+            transition: var(--transition);
+        }
+
+        .nav-links a:hover::after, .nav-item-active::after {
+            width: 100% !important;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-actions .btn-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 1rem;
+            box-shadow: none;
+        }
+
+        .nav-actions .btn {
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+
+        .nav-actions #user-avatar-nav.avatar-box {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* Mobile Bottom Nav Bar */
+        .mobile-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: calc(60px + env(safe-area-inset-bottom));
+            padding-bottom: env(safe-area-inset-bottom);
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 999;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.03);
+        }
+
+        .mobile-nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            gap: 4px;
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.25rem;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--primary);
+        }
+
+        /* App Main Engine Wrappers */
+        main {
+            margin-top: calc(56px + env(safe-area-inset-top));
+            margin-bottom: calc(60px + env(safe-area-inset-bottom));
+            min-height: calc(100vh - 116px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        }
+
+        .app-view {
+            display: none;
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .app-view.active-view {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* --- 1. HOMEPAGE UI --- */
+        .hero-section {
+            padding: 120px 5% 80px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: radial-gradient(circle at 80% 20%, var(--primary-light), transparent 45%),
+                        radial-gradient(circle at 10% 80%, rgba(108, 92, 231, 0.08), transparent 45%);
+            gap: 40px;
+        }
+
+        .hero-content {
+            max-width: 600px;
+        }
+
+        .hero-content h1 {
+            font-size: 3.5rem;
+            line-height: 1.15;
+            margin-bottom: 24px;
+            letter-spacing: -1px;
+        }
+
+        .hero-content p {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+        }
+
+        .hero-graphics {
+            position: relative;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hero-img-stack {
+            position: relative;
+            width: 380px;
+            height: 450px;
+        }
+
+        .hero-card {
+            position: absolute;
+            width: 260px;
+            height: 340px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            border: 4px solid var(--bg-surface);
+            transition: var(--transition);
+        }
+
+        .hero-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .hero-card-1 {
+            transform: rotate(-8px) translate(-40px, 20px);
+            z-index: 1;
+        }
+        .hero-card-2 {
+            transform: rotate(4px) translate(40px, -10px);
+            z-index: 2;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 2.25rem;
+            margin-bottom: 12px;
+            margin-top: 60px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 48px;
+        }
+
+        .how-it-works-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            padding: 0 5% 80px;
+        }
+
+        .step-card {
+            background-color: var(--bg-surface);
+            padding: 40px 32px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .step-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .step-icon {
+            width: 70px;
+            height: 70px;
+            border-radius: var(--radius-md);
+            background-color: var(--primary-light);
+            color: var(--primary);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            margin-bottom: 24px;
+        }
+
+        /* Real Moments Gallery */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            padding: 0 5% 80px;
+        }
+
+        .gallery-card {
+            position: relative;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            transition: var(--transition);
+            aspect-ratio: 4 / 5;
+        }
+
+        .gallery-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .gallery-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-card:hover img {
+            transform: scale(1.06);
+        }
+
+        .gallery-caption {
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            padding: 20px 16px 14px;
+            background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
+            color: #ffffff;
+        }
+
+        .gallery-caption strong {
+            display: block;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1rem;
+        }
+
+        .gallery-caption span {
+            font-size: 0.8rem;
+            opacity: 0.85;
+        }
+
+        /* Testimonials Carousel */
+        .testimonial-sec {
+            background-color: var(--bg-surface);
+            padding: 80px 5%;
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .carousel-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .carousel-track {
+            display: flex;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .testimonial-item {
+            min-width: 100%;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .testimonial-img {
+            width: 90px;
+            height: 90px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+            margin-bottom: 20px;
+            border: 3px solid var(--primary);
+        }
+
+        .testimonial-quote {
+            font-size: 1.35rem;
+            font-style: italic;
+            margin-bottom: 20px;
+            color: var(--text-main);
+            font-weight: 400;
+        }
+
+        .testimonial-author {
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .carousel-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--bg-el);
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+        }
+        .carousel-btn-prev { left: 0; }
+        .carousel-btn-next { right: 0; }
+
+        /* Privacy/Safety Block */
+        .safety-section {
+            padding: 80px 5%;
+            display: flex;
+            align-items: center;
+            gap: 60px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .safety-content { flex: 1; }
+        .safety-img-box {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        .safety-badge-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .safety-badge {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background-color: var(--bg-surface);
+            padding: 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+        }
+        .safety-badge i {
+            color: var(--accent);
+            font-size: 1.25rem;
+        }
+
+        /* Footer Architecture */
+        footer {
+            background-color: var(--bg-surface);
+            border-top: 1px solid var(--border);
+            padding: 60px 5% 30px;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto 40px;
+        }
+
+        .footer-col h4 {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col ul li {
+            margin-bottom: 12px;
+            color: var(--text-muted);
+        }
+
+        .footer-col ul li a:hover {
+            color: var(--primary);
+        }
+
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-top: 30px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .social-icons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .social-icons a {
+            font-size: 1.25rem;
+            transition: var(--transition);
+        }
+
+        .social-icons a:hover { color: var(--primary); }
+
+        /* --- 2. AUTHENTICATION & ONBOARDING --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-modal {
+            background-color: var(--bg-surface);
+            width: 100%;
+            max-width: 440px;
+            border-radius: var(--radius-md);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            animation: modalScale 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalScale {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 1.25rem;
+            color: var(--text-muted);
+        }
+
+        .auth-title {
+            font-size: 1.75rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+
+        .social-auth-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            transition: var(--transition);
+        }
+
+        .social-auth-btn:hover {
+            background-color: var(--bg-el);
+        }
+
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--text-muted);
+            margin: 24px 0;
+            font-size: 0.85rem;
+        }
+        .auth-divider::before, .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid var(--border);
+        }
+        .auth-divider:not(:empty)::before { margin-right: .5em; }
+        .auth-divider:not(:empty)::after { margin-left: .5em; }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        /* Onboarding Wizard */
+        .onboarding-container {
+            max-width: 600px;
+            margin: 40px auto;
+            background-color: var(--bg-surface);
+            padding: 40px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border);
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--bg-el);
+            border-radius: var(--radius-full);
+            margin-bottom: 40px;
+            overflow: hidden;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            width: 25%;
+            background: linear-gradient(95deg, var(--primary), var(--secondary));
+            transition: width 0.4s ease;
+        }
+
+        .onboarding-step {
+            display: none;
+        }
+
+        .onboarding-step.active-step {
+            display: block;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 12px;
+        }
+
+        .tag-chip {
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            background-color: var(--bg-el);
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .tag-chip.selected {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .photo-upload-box {
+            border: 2px dashed var(--border);
+            padding: 40px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            cursor: pointer;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .photo-upload-box:hover {
+            border-color: var(--primary);
+            background-color: var(--primary-light);
+        }
+
+        .photo-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .photo-preview-item {
+            aspect-ratio: 1;
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            background-color: var(--bg-el);
+            position: relative;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .wizard-actions {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        /* --- 3. DASHBOARD VIEW --- */
+        .dashboard-layout {
+            display: grid;
+            grid-template-columns: 100%;
+            min-height: calc(100vh - 116px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+        }
+
+        .sidebar-panel {
+            display: none;
+            background-color: var(--bg-surface);
+            border-right: none;
+            border-bottom: 1px solid var(--border);
+            padding: 20px 16px;
+        }
+
+        .main-content-panel {
+            padding: 40px 5%;
+            overflow-y: auto;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background-color: var(--bg-surface);
+            padding: 24px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .completion-ring-box {
+            position: relative;
+            width: 60px;
+            height: 60px;
+        }
+
+        .completion-ring-box svg {
+            transform: rotate(-90deg);
+        }
+
+        /* --- 4. DISCOVER / SWIPE UI --- */
+        .discover-container {
+            max-width: 420px;
+            width: 100%;
+            margin: 12px auto 24px;
+            position: relative;
+            height: min(600px, 62vh);
+        }
+
+        .card-deck {
+            position: relative;
+            width: 100%;
+            height: calc(100% - 84px);
+        }
+
+        .profile-card {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            cursor: grab;
+            user-select: none;
+            transform-origin: center bottom;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s;
+        }
+
+        .card-img-holder {
+            flex: 1;
+            position: relative;
+            background-color: #000;
+        }
+
+        .card-img-holder img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .card-gradient {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 140px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            pointer-events: none;
+        }
+
+        .card-floating-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            color: white;
+            z-index: 10;
+        }
+
+        .card-meta-line {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .verified-badge {
+            color: #00cec9;
+            font-size: 1.1rem;
+        }
+
+        .card-body-details {
+            padding: 24px;
+            background-color: var(--bg-surface);
+        }
+
+        .swipe-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            margin-top: 24px;
+        }
+
+        .btn-action-pass { color: #ff7675; border-color: rgba(255, 118, 117, 0.2); }
+        .btn-action-pass:hover { background-color: rgba(255, 118, 117, 0.1); }
+        .btn-action-like { color: #2ecc71; border-color: rgba(46, 204, 113, 0.2); }
+        .btn-action-like:hover { background-color: rgba(46, 204, 113, 0.1); }
+        .btn-action-super { color: var(--secondary); border-color: rgba(108, 92, 231, 0.2); }
+        .btn-action-super:hover { background-color: rgba(108, 92, 231, 0.1); }
+
+        /* Filter Panel Drawer */
+        .filter-sidebar {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            padding: 24px;
+            border: 1px solid var(--border);
+            height: fit-content;
+        }
+
+        .filter-group {
+            margin-bottom: 24px;
+        }
+
+        .range-slider-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Skeleton Loading State */
+        .skeleton-card {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            height: 500px;
+            border: 1px solid var(--border);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skeleton-img {
+            flex: 1;
+            background: linear-gradient(90deg, var(--bg-el) 25%, var(--border) 50%, var(--bg-el) 75%);
+            background-size: 200% 100%;
+            animation: loadingPulse 1.5s infinite;
+        }
+
+        @keyframes loadingPulse {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* --- 5. MATCHES & MESSAGING VIEW --- */
+        .matches-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+        }
+
+        .match-thumb-card {
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .match-thumb-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .match-thumb-img {
+            width: 100%;
+            aspect-ratio: 1;
+            object-fit: cover;
+        }
+
+        .match-thumb-info {
+            padding: 12px;
+            text-align: center;
+        }
+
+        .match-badge-new {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+
+        /* Messaging Split Screen */
+        .messenger-layout {
+            display: grid;
+            grid-template-columns: 100%;
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            height: calc(100vh - 116px - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 40px);
+            overflow: hidden;
+        }
+
+        .chat-sidebar {
+            border-right: none;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .chat-back-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            margin-right: 4px;
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        .chat-search-box {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .conversation-list {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .conversation-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px;
+            cursor: pointer;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+        }
+
+        .conversation-item:hover, .conversation-item.active-chat {
+            background-color: var(--bg-body);
+        }
+
+        .avatar-box {
+            position: relative;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+        }
+
+        .avatar-box img {
+            width: 100%;
+            height: 100%;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+        }
+
+        .online-status {
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            width: 12px;
+            height: 12px;
+            background-color: #2ecc71;
+            border: 2px solid var(--bg-surface);
+            border-radius: var(--radius-full);
+        }
+
+        .chat-item-body {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .chat-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+
+        .chat-item-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .chat-item-time {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .chat-item-preview {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .unread-count {
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 700;
+            width: 18px;
+            height: 18px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Active Chat Container */
+        .active-chat-window {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background-color: var(--bg-body);
+        }
+
+        .chat-window-header {
+            background-color: var(--bg-surface);
+            padding: 14px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chat-window-body {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .msg-bubble-wrap {
+            display: flex;
+            gap: 12px;
+            max-width: 70%;
+        }
+
+        .msg-bubble-wrap.msg-sent {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        .msg-bubble-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: var(--radius-full);
+            object-fit: cover;
+        }
+
+        .msg-bubble-content {
+            background-color: var(--bg-surface);
+            padding: 12px 16px;
+            border-radius: 0 var(--radius-md) var(--radius-md) var(--radius-md);
+            box-shadow: var(--shadow-sm);
+            position: relative;
+        }
+
+        .msg-sent .msg-bubble-content {
+            background: linear-gradient(135deg, var(--primary), #ff6b8b);
+            color: white;
+            border-radius: var(--radius-md) 0 var(--radius-md) var(--radius-md);
+        }
+
+        .msg-timestamp {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            display: block;
+            text-align: right;
+        }
+        .msg-sent .msg-timestamp { color: rgba(255,255,255,0.8); }
+
+        .chat-window-footer {
+            background-color: var(--bg-surface);
+            padding: 16px 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .chat-input-wrapper {
+            flex: 1;
+            background-color: var(--bg-body);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            padding: 6px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .chat-input-wrapper input {
+            flex: 1;
+            height: 36px;
+        }
+
+        /* --- 6. NOTIFICATIONS DROPDOWN --- */
+        .notif-dropdown {
+            position: fixed;
+            top: calc(56px + env(safe-area-inset-top) + 8px);
+            right: 16px;
+            width: calc(100% - 32px);
+            max-width: 360px;
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-lg);
+            z-index: 1010;
+            display: none;
+            overflow: hidden;
+        }
+
+        .notif-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            font-weight: 700;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notif-list {
+            max-height: 400px;
+            overflow-y: auto;
+            list-style: none;
+        }
+
+        .notif-item {
+            display: flex;
+            gap: 14px;
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .notif-item:hover { background-color: var(--bg-body); }
+        .notif-icon-box {
+            width: 40px;
+            height: 40px;
+            border-radius: var(--radius-full);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* --- 7. SETTINGS PANEL --- */
+        .settings-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: var(--bg-surface);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow-md);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: 240px 1fr;
+        }
+
+        .settings-nav {
+            border-right: 1px solid var(--border);
+            background-color: var(--bg-body);
+            padding: 20px 0;
+        }
+
+        .settings-nav-btn {
+            width: 100%;
+            padding: 14px 24px;
+            text-align: left;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            color: var(--text-muted);
+            transition: var(--transition);
+        }
+
+        .settings-nav-btn:hover, .settings-nav-btn.active-settings-tab {
+            color: var(--primary);
+            background-color: var(--bg-surface);
+        }
+
+        .settings-content-panel {
+            padding: 40px;
+        }
+
+        .settings-pane {
+            display: none;
+        }
+
+        .settings-pane.active-pane {
+            display: block;
+        }
+
+        .danger-zone {
+            border: 1px solid #ff7675;
+            background-color: rgba(255, 118, 117, 0.05);
+            padding: 24px;
+            border-radius: var(--radius-sm);
+            margin-top: 40px;
+        }
+
+        /* --- 8. PREMIUM/UPGRADE PRICING --- */
+        .pricing-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 32px;
+            max-width: 1000px;
+            margin: 40px auto;
+        }
+
+        .pricing-card {
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 40px 32px;
+            text-align: center;
+            position: relative;
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .pricing-card.recommended {
+            border: 2px solid var(--primary);
+            transform: scale(1.03);
+            box-shadow: var(--shadow-md);
+        }
+
+        .recommended-badge {
+            position: absolute;
+            top: -14px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--primary);
+            color: white;
+            font-size: 0.8rem;
+            font-weight: 700;
+            padding: 4px 16px;
+            border-radius: var(--radius-full);
+            text-transform: uppercase;
+        }
+
+        .price-box {
+            margin: 24px 0;
+        }
+
+        .price-amt {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .pricing-features-list {
+            list-style: none;
+            text-align: left;
+            margin: 30px 0;
+        }
+
+        .pricing-features-list li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+        }
+
+        .pricing-features-list li i { color: #2ecc71; }
+
+        /* --- Mobile App Layout (always on) --- */
+        .nav-links { display: none; }
+        .hero-section { flex-direction: column; text-align: center; padding-top: 24px; }
+        .hero-graphics { order: -1; margin-bottom: 32px; }
+        .hero-content h1 { font-size: 1.9rem; }
+        .safety-section { flex-direction: column; }
+        .chat-sidebar { display: flex; }
+        .settings-container { grid-template-columns: 100%; }
+        .settings-nav { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
+        .settings-nav-btn { white-space: nowrap; padding: 10px 16px; }
+        .main-content-panel { padding: 20px 16px; }
+
+        /* --- Phone-frame presentation on wider screens --- */
+        @media (min-width: 481px) {
+            html { background-color: #dfe3e8; }
+            [data-theme="dark"] { background-color: #05060a; }
+            body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.25); min-height: 100vh; }
+            .navbar, .mobile-nav {
+                left: 50%;
+                right: auto;
+                width: 100%;
+                max-width: 480px;
+                transform: translateX(-50%);
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- TOAST NOTIFICATION STACK -->
+    <div class="toast-stack" id="toastStack"></div>
+
+    <!-- GLOBAL NAVBAR -->
+    <nav class="navbar" id="mainNavbar">
+        <div class="nav-brand" onclick="navigateTo('home')">
+            <i class="fa-solid ref fa-heart-pulse"></i> HeartSync
+        </div>
+        <ul class="nav-links" id="desktop-links">
+            <li><a href="#" onclick="navigateTo('home')">Home</a></li>
+            <li><a href="#" onclick="navigateTo('discover')">Discover</a></li>
+            <li><a href="#" onclick="navigateTo('matches')">Matches</a></li>
+            <li><a href="#" onclick="navigateTo('messages')">Messages</a></li>
+            <li><a href="#" onclick="navigateTo('premium')">Premium</a></li>
+        </ul>
+        <div class="nav-actions">
+            <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle dark mode">
+                <i class="fa-solid fa-moon" id="theme-icon"></i>
+            </button>
+            <button class="btn-icon" onclick="toggleNotifications()" aria-label="View notifications">
+                <i class="fa-solid fa-bell"></i>
+            </button>
+            <button class="btn btn-secondary" onclick="openAuthModal('login')" id="login-btn-nav">Log In</button>
+            <button class="btn btn-primary" onclick="openAuthModal('signup')" id="signup-btn-nav">Sign Up</button>
+            <div class="avatar-box" id="user-avatar-nav" style="display:none; cursor:pointer;" onclick="navigateTo('dashboard')">
+                <img src="" id="nav-avatar-img" alt="My Profile">
+            </div>
+        </div>
+    </nav>
+
+    <!-- MOBILE NAVIGATION BOTTOM BAR -->
+    <div class="mobile-nav">
+        <a href="#" class="mobile-nav-item active" id="m-nav-home" onclick="navigateTo('home')">
+            <i class="fa-solid fa-house"></i>Home
+        </a>
+        <a href="#" class="mobile-nav-item" id="m-nav-discover" onclick="navigateTo('discover')">
+            <i class="fa-solid fa-compass"></i>Discover
+        </a>
+        <a href="#" class="mobile-nav-item" id="m-nav-matches" onclick="navigateTo('matches')">
+            <i class="fa-solid fa-heart"></i>Matches
+        </a>
+        <a href="#" class="mobile-nav-item" id="m-nav-messages" onclick="navigateTo('messages')">
+            <i class="fa-solid fa-comment"></i>Chat
+        </a>
+        <a href="#" class="mobile-nav-item" id="m-nav-settings" onclick="navigateTo('settings')">
+            <i class="fa-solid fa-gear"></i>Settings
+        </a>
+    </div>
+
+    <!-- NOTIFICATIONS PANEL -->
+    <div class="notif-dropdown" id="notificationsPanel">
+        <div class="notif-header">
+            <span>Notifications</span>
+            <button onclick="toggleNotifications()"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <ul class="notif-list" id="notificationsList">
+            <!-- Dynamic Injection -->
+        </ul>
+    </div>
+
+    <!-- AUTHENTICATION SYSTEM OVERLAY MODALS -->
+    <div class="modal-overlay" id="authModalOverlay">
+        <div class="auth-modal">
+            <button class="close-modal" onclick="closeAuthModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="auth-title" id="authModalTitle">Create an Account</h3>
+            
+
+
+            <p id="authErrorMsg" style="display:none; color:#ff4b72; font-size:0.85rem; margin-bottom:14px; text-align:center;"></p>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group" id="authNameGroup" style="display:none;">
+                    <label class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="auth-name" placeholder="Alex">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" class="form-control" id="auth-email" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-control" id="auth-password" required placeholder="•••••••• (min 8 characters)" minlength="8">
+                </div>
+                <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;" id="authSubmitBtn">Get Started</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN ROOT APPS ENGINE -->
+    <main>
+
+        <!-- --- 1. VIEW: HOMEPAGE --- -->
+        <section id="view-home" class="app-view active-view">
+            <div class="hero-section">
+                <div class="hero-content">
+                    <h1>Find the connection you've been searching for</h1>
+                    <p>HeartSync uses intentional matching algorithms based on structural core personality traits, life values, and deep interests. No endless superficial swiping.</p>
+                    <button class="btn btn-primary" onclick="openAuthModal('signup')">Create Free Profile</button>
+                </div>
+                <div class="hero-graphics">
+                    <div class="hero-img-stack">
+                        <div class="hero-card hero-card-1">
+                            <img src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
+                        </div>
+                        <div class="hero-card hero-card-2">
+                            <img src="https://picsum.photos/id/91/400/600" alt="Happy Couple Interaction">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-bar reveal-up">
+                <div class="stat-item">
+                    <strong data-count="2400000" data-suffix="+">0</strong>
+                    <span>Matches Made</span>
+                </div>
+                <div class="stat-item">
+                    <strong data-count="150" data-suffix="+">0</strong>
+                    <span>Countries Active</span>
+                </div>
+                <div class="stat-item">
+                    <strong data-count="98" data-suffix="%">0</strong>
+                    <span>Verified Profiles</span>
+                </div>
+                <div class="stat-item">
+                    <strong data-count="4" data-decimals="1" data-suffix="/5">0</strong>
+                    <span>Average Rating</span>
+                </div>
+            </div>
+
+            <h2 class="section-title reveal-up">How It Works</h2>
+            <p class="section-subtitle reveal-up">Real alignment requires intention. Three steps to real matching.</p>
+            <div class="how-it-works-grid">
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-user-pen"></i></div>
+                    <h3>1. Create Profile</h3>
+                    <p style="color:var(--text-muted); margin-top:12px;">Complete our interactive lifestyle questionnaire and onboarding setup.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-sliders"></i></div>
+                    <h3>2. Set Core Filters</h3>
+                    <p style="color:var(--text-muted); margin-top:12px;">Define your ideal relationship landscape, age, distance ranges, and shared values.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-icon"><i class="fa-solid fa-comments"></i></div>
+                    <h3>3. Deep Conversations</h3>
+                    <p style="color:var(--text-muted); margin-top:12px;">Skip the icebreakers. Interact through integrated messaging when mutual likes lock.</p>
+                </div>
+            </div>
+
+            <!-- Real Moments Gallery -->
+            <h2 class="section-title reveal-up">Real Moments, Real Connections</h2>
+            <p class="section-subtitle reveal-up">A glimpse into the dates and memories HeartSync has helped create.</p>
+            <div class="gallery-grid reveal-up">
+                <div class="gallery-card">
+                    <img src="https://picsum.photos/id/1027/500/625" alt="Couple laughing together over coffee">
+                    <div class="gallery-caption">
+                        <strong>Coffee First Dates</strong>
+                        <span>Where thousands of conversations begin</span>
+                    </div>
+                </div>
+                <div class="gallery-card">
+                    <img src="https://picsum.photos/id/1074/500/625" alt="Couple walking together outdoors">
+                    <div class="gallery-caption">
+                        <strong>Weekend Adventures</strong>
+                        <span>Shared interests turned into shared journeys</span>
+                    </div>
+                </div>
+                <div class="gallery-card">
+                    <img src="https://picsum.photos/id/1062/500/625" alt="Couple celebrating a special moment">
+                    <div class="gallery-caption">
+                        <strong>Milestone Moments</strong>
+                        <span>Celebrating the connections that last</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Carousel Section -->
+            <div class="testimonial-sec reveal-up">
+                <h2 class="section-title">Success Stories</h2>
+                <p class="section-subtitle" style="margin-bottom:30px;">Real connections found right here.</p>
+                <div class="carousel-container">
+                    <button class="carousel-btn carousel-btn-prev" onclick="moveCarousel(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                    <div class="carousel-track" id="testimonialTrack">
+                        <div class="testimonial-item">
+                            <img src="https://i.pravatar.cc/150?img=47" alt="Sarah and David" class="testimonial-img">
+                            <p class="testimonial-quote">"We both valued deep travel and independent entrepreneurship. The algorithm put us together instantly. Two years later and we're married!"</p>
+                            <div class="testimonial-author">Sarah & David — London, UK</div>
+                        </div>
+                        <div class="testimonial-item">
+                            <img src="https://i.pravatar.cc/150?img=68" alt="Marcus and Elena" class="testimonial-img">
+                            <p class="testimonial-quote">"I loved the safety verification system. Knowing Elena was profile-verified made initiating that first real date completely stress-free."</p>
+                            <div class="testimonial-author">Marcus & Elena — New York, USA</div>
+                        </div>
+                    </div>
+                    <button class="carousel-btn carousel-btn-next" onclick="moveCarousel(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+            </div>
+
+            <!-- Safety Block -->
+            <div class="safety-section reveal-up">
+                <div class="safety-content">
+                    <h2>Your Safety & Privacy Come First</h2>
+                    <p style="color:var(--text-muted); margin-top:16px;">We design and configure security directly into every level of interaction within our modern dating engine ecosystem.</p>
+                    <div class="safety-badge-grid">
+                        <div class="safety-badge">
+                            <i class="fa-solid fa-shield-halved"></i>
+                            <div><strong>100% Verified Profiles</strong><br><small style="color:var(--text-muted)">Mandatory biometric scan check option</small></div>
+                        </div>
+                        <div class="safety-badge">
+                            <i class="fa-solid fa-lock"></i>
+                            <div><strong>End-to-End Encryption</strong><br><small style="color:var(--text-muted)">Your messages remain completely private</small></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="safety-img-box">
+                    <img src="https://picsum.photos/id/367/500/350" alt="Security Illustration Stack" style="border-radius:var(--radius-md); max-width:100%;">
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <h2 class="section-title reveal-up">Frequently Asked Questions</h2>
+            <p class="section-subtitle reveal-up">Everything you need to know before you get started.</p>
+            <div class="faq-section reveal-up">
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">Is HeartSync free to use? <i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Yes — creating a profile, setting your filters, and matching are all free. Premium unlocks advanced targeting and unlimited super likes.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">How does profile verification work? <i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>We offer an optional biometric scan check that confirms your photos match your live selfie, adding a verified badge to your profile.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">Can I control who sees my profile? <i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Absolutely. Distance, age range, and visibility settings are all adjustable from your discovery filters and account privacy settings.</p></div>
+                </div>
+                <div class="faq-item">
+                    <button class="faq-question" onclick="toggleFaq(this)">What happens if I match with someone? <i class="fa-solid fa-plus"></i></button>
+                    <div class="faq-answer"><p>Once you both like each other, a private encrypted chat thread unlocks instantly so you can start the conversation right away.</p></div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <footer>
+                <div class="footer-grid">
+                    <div class="footer-col">
+                        <h4>Company</h4>
+                        <ul>
+                            <li><a href="#">About Us</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Success Stories</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Legal</h4>
+                        <ul>
+                            <li><a href="#">Privacy Policy</a></li>
+                            <li><a href="#">Terms of Service</a></li>
+                            <li><a href="#">Cookie Policies</a></li>
+                        </ul>
+                    </div>
+                    <div class="footer-col">
+                        <h4>Support</h4>
+                        <ul>
+                            <li><a href="#">Help Center</a></li>
+                            <li><a href="#">Safety Guidelines</a></li>
+                            <li><a href="#">Contact Support</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span>&copy; 2026 HeartSync Engine UI. All rights reserved.</span>
+                    <div class="social-icons">
+                        <a href="#"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+                    </div>
+                </div>
+            </footer>
+        </section>
+
+        <!-- --- 2. VIEW: ONBOARDING WIZARD --- -->
+        <section id="view-onboarding" class="app-view">
+            <div class="onboarding-container">
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="onboardingProgress"></div>
+                </div>
+
+                <form id="onboardingForm" onsubmit="handleOnboardingSubmit(event)">
+                    <!-- Step 1: Basics -->
+                    <div class="onboarding-step active-step" id="step-1">
+                        <h2 style="margin-bottom:12px;">Tell us about yourself</h2>
+                        <p style="color:var(--text-muted); margin-bottom:24px;">Let's configure your basic identity structure.</p>
+                        <div class="form-group">
+                            <label class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="ob-name" required placeholder="Alex">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" id="ob-dob" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Your Gender</label>
+                            <select class="form-control" id="ob-gender">
+                                <option>Woman</option>
+                                <option>Man</option>
+                                <option>Non-Binary</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Show Me</label>
+                            <select class="form-control" id="ob-interested">
+                                <option>Everyone</option>
+                                <option>Men</option>
+                                <option>Women</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Your City</label>
+                            <input type="text" class="form-control" id="ob-location" placeholder="Paris, France" required>
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Intentions & Hobbies -->
+                    <div class="onboarding-step" id="step-2">
+                        <h2 style="margin-bottom:12px;">What makes you, you?</h2>
+                        <p style="color:var(--text-muted); margin-bottom:24px;">Interests unlock deep real-world compatibility tracking.</p>
+                        <div class="form-group">
+                            <label class="form-label">Relationship Goals</label>
+                            <select class="form-control" id="ob-goals">
+                                <option>Long-term partnership</option>
+                                <option>Open to short-term/casual</option>
+                                <option>New friends & Networking</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Select Hobbies / Passions (Click to toggle)</label>
+                            <div class="tag-selector" id="interestTagsContainer">
+                                <!-- Dynamic Tag Chips Injection -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Media Upload -->
+                    <div class="onboarding-step" id="step-3">
+                        <h2 style="margin-bottom:12px;">Add profile media</h2>
+                        <p style="color:var(--text-muted); margin-bottom:24px;">Profiles with at least 3 distinct photos receive 80% higher matching rates.</p>
+                        <div class="photo-upload-box" onclick="document.getElementById('ob-photo-input').click()">
+                            <input type="file" id="ob-photo-input" accept="image/png,image/jpeg,image/webp" style="display:none" onchange="handlePhotoFileSelect(event)">
+                            <i class="fa-solid fa-cloud-arrow-up" style="font-size:2.5rem; color:var(--primary); margin-bottom:12px;"></i>
+                            <p>Tap to choose a photo from your device</p>
+                            <small style="color:var(--text-muted)">Supports PNG, JPEG, WEBP up to 8MB &middot; up to 6 photos</small>
+                        </div>
+                        <div class="photo-preview-grid" id="ob-photo-grid">
+                            <!-- Populated dynamically as photos are uploaded -->
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Final Touch Bio -->
+                    <div class="onboarding-step" id="step-4">
+                        <h2 style="margin-bottom:12px;">Express yourself in your bio</h2>
+                        <p style="color:var(--text-muted); margin-bottom:24px;">Share a brief summary describing your daily lifestyle.</p>
+                        <div class="form-group">
+                            <label class="form-label">Write your story</label>
+                            <textarea class="form-control" id="ob-bio" rows="5" placeholder="Passionate about architecture, deep espresso, and morning trail running. Let's find something real..." required></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Wizard Control System -->
+                    <div class="wizard-actions">
+                        <button type="button" class="btn btn-secondary" id="ob-back-btn" onclick="moveWizardStep(-1)" style="visibility:hidden">Back</button>
+                        <button type="button" class="btn btn-primary" id="ob-next-btn" onclick="moveWizardStep(1)">Continue</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- --- 3. VIEW: USER CENTRAL DASHBOARD --- -->
+        <section id="view-dashboard" class="app-view">
+            <div class="dashboard-layout">
+                <div class="sidebar-panel">
+                    <div style="text-align:center; margin-bottom:30px;">
+                        <img src="" id="dash-user-avatar" alt="User Main Frame" style="width:100px; height:100px; border-radius:var(--radius-full); object-fit:cover; border:3px solid var(--primary); margin-bottom:12px; background:var(--bg-el);">
+                        <h3 id="dash-user-name">-</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem;"><i class="fa-solid fa-location-dot"></i> <span id="dash-user-location">Add your location in Settings</span></p>
+                    </div>
+                    <hr style="border:none; border-top:1px solid var(--border); margin:20px 0;">
+                    <button class="btn btn-primary" style="width:100%" onclick="navigateTo('discover')"><i class="fa-solid fa-sparkles"></i> Start Discovering</button>
+                </div>
+                <div class="main-content-panel">
+                    <h2 style="margin-bottom:8px;">Welcome Back!</h2>
+                    <p style="color:var(--text-muted); margin-bottom:30px;">Here is what happened inside your profile network today.</p>
+                    
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background-color:rgba(46, 204, 113, 0.1); color:#2ecc71"><i class="fa-solid fa-bolt"></i></div>
+                            <div><h3 id="dash-matches-count">0</h3><p style="color:var(--text-muted); font-size:0.9rem;">Total Matches</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background-color:var(--primary-light); color:var(--primary)"><i class="fa-solid fa-heart"></i></div>
+                            <div><h3 id="dash-likes-count">0</h3><p style="color:var(--text-muted); font-size:0.9rem;">Received Likes</p></div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon" style="background-color:rgba(108, 92, 231, 0.1); color:var(--secondary)"><i class="fa-solid fa-percent"></i></div>
+                            <div>
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <h3 id="dash-completion-pct">0%</h3>
+                                    <div class="completion-ring-box">
+                                        <svg width="36" height="36">
+                                            <circle cx="18" cy="18" r="14" fill="transparent" stroke="var(--border)" stroke-width="3"/>
+                                            <circle id="dash-completion-ring" cx="18" cy="18" r="14" fill="transparent" stroke="var(--primary)" stroke-width="3" stroke-dasharray="88" stroke-dashoffset="88"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <p style="color:var(--text-muted); font-size:0.9rem;">Profile Completed</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 style="margin-bottom:20px;">Recommended Profiles For You</h3>
+                    <div class="matches-grid" id="dashboardRecommendations">
+                        <!-- Dynamic Grid Placement -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- 4. VIEW: DISCOVER CARD SWIPER --- -->
+        <section id="view-discover" class="app-view">
+            <div class="dashboard-layout">
+                <!-- Filters Left Sidebar -->
+                <div class="sidebar-panel" style="display:block;">
+                    <div class="filter-sidebar">
+                        <h3 style="margin-bottom:20px;"><i class="fa-solid fa-sliders"></i> Engine Filters</h3>
+                        <div class="filter-group">
+                            <label class="form-label">Maximum Age</label>
+                            <input type="range" min="18" max="70" value="70" class="form-control" style="padding:0;" id="filter-age" oninput="document.getElementById('ageVal').innerText = this.value">
+                            <div class="range-slider-labels"><span>18</span><span id="ageVal">70</span><span>70+</span></div>
+                        </div>
+                        <div class="filter-group">
+                            <label class="form-label">Relationship Target</label>
+                            <select class="form-control" id="filter-goals">
+                                <option value="">Any Goal Form</option>
+                                <option value="Long-term partnership">Long Term Connection</option>
+                                <option value="Casual Relationship">Casual Relationship</option>
+                            </select>
+                        </div>
+                        <div class="filter-group" style="display:flex; justify-content:between; align-items:center; gap:20px;">
+                            <label class="form-label" style="margin:0;">Verified Profiles Only</label>
+                            <input type="checkbox" id="filter-verified" style="width:20px; height:20px; accent-color:var(--primary)">
+                        </div>
+                        <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="applyFiltersMock()">Apply Settings</button>
+                    </div>
+                </div>
+                <!-- Interactive Deck Panel -->
+                <div class="main-content-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                    <div class="discover-container">
+                        <!-- Loading State Frame -->
+                        <div class="skeleton-card" id="discoverSkeleton" style="display:none;">
+                            <div class="skeleton-img"></div>
+                            <div class="card-body-details">
+                                <div style="height:24px; background-color:var(--bg-el); width:60%; margin-bottom:12px; border-radius:4px;"></div>
+                                <div style="height:16px; background-color:var(--bg-el); width:85%; border-radius:4px;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Empty Card Deck State -->
+                        <div id="deckEmptyState" style="display:none; text-align:center; padding:100px 20px;">
+                            <i class="fa-solid fa-earth-americas" style="font-size:3.5rem; color:var(--text-muted); margin-bottom:20px;"></i>
+                            <h3>No New Profiles in Area</h3>
+                            <p style="color:var(--text-muted); margin-top:8px;">Try expansion adjustments on your structural distance or age parameters inside your filter configurations.</p>
+                            <button class="btn btn-primary" style="margin-top:20px;" onclick="resetDiscoverDeck()">Refresh Deck Stack</button>
+                        </div>
+
+                        <!-- Main Core Deck -->
+                        <div class="card-deck" id="cardDeckContainer">
+                            <!-- Injected Dynamically by State Controller Engine -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- 5. VIEW: MATCHES DISPLAY MATRIX --- -->
+        <section id="view-matches" class="app-view">
+            <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%;">
+                <h2 style="margin-bottom:12px;">Your Mutual Matches</h2>
+                <p style="color:var(--text-muted); margin-bottom:30px;">When profiles like each other mutually, connections lock open below.</p>
+                <div class="matches-grid" id="matchesMasterGrid">
+                    <!-- Dynamic Render Elements -->
+                </div>
+            </div>
+        </section>
+
+        <!-- --- 6. VIEW: MESSAGING CORE MODULE --- -->
+        <section id="view-messages" class="app-view">
+            <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%; padding:20px 0;">
+                <div class="messenger-layout">
+                    <!-- Sidebar list -->
+                    <div class="chat-sidebar">
+                        <div class="chat-search-box">
+                            <input type="text" id="conversationSearchInput" class="form-control" placeholder="Search conversations..." style="border-radius:var(--radius-full)" oninput="filterConversations(this.value)">
+                        </div>
+                        <ul class="conversation-list" id="chatConversationsUl">
+                            <!-- Dynamic Injection -->
+                        </ul>
+                    </div>
+                    <!-- Messaging Active Window Frame -->
+                    <div class="active-chat-window" id="activeChatWindow">
+                        <div id="chatWindowPlaceholder" style="display:flex; flex-direction:column; align-items:center; justify-content:center; flex:1; color:var(--text-muted)">
+                            <i class="fa-solid fa-comments" style="font-size:3rem; margin-bottom:16px;"></i>
+                            <p>Select an unlocked active match conversation to begin messaging</p>
+                        </div>
+                        <div id="chatWindowActiveStructure" style="display:none; flex-direction:column; height:100%;">
+                            <div class="chat-window-header">
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <button class="chat-back-btn" onclick="closeActiveChat()" aria-label="Back to conversations"><i class="fa-solid fa-arrow-left"></i></button>
+                                    <div class="avatar-box">
+                                        <img src="" alt="" id="activeChatAvatar">
+                                        <div class="online-status"></div>
+                                    </div>
+                                    <div>
+                                        <h4 id="activeChatName">Loading...</h4>
+                                        <small style="color:#2ecc71; font-weight:600;">Active Now</small>
+                                    </div>
+                                </div>
+                                <div>
+                                    <button class="btn-icon" style="width:36px; height:36px; box-shadow:none;"><i class="fa-solid fa-phone"></i></button>
+                                    <button class="btn-icon" style="width:36px; height:36px; box-shadow:none; margin-left:8px;"><i class="fa-solid fa-video"></i></button>
+                                </div>
+                            </div>
+                            <!-- Stream Body -->
+                            <div class="chat-window-body" id="chatMessageStream">
+                                <!-- Message Bubbles -->
+                            </div>
+                            <!-- Input Tray Bar -->
+                            <div class="chat-window-footer">
+                                <button class="btn-icon" style="box-shadow:none; background:none; border:none; width:auto;"><i class="fa-regular fa-image" style="font-size:1.25rem;"></i></button>
+                                <div class="chat-input-wrapper">
+                                    <input type="text" placeholder="Type a message seamlessly..." id="chatInputMessageField" onkeypress="if(event.key==='Enter') sendChatMessage()">
+                                    <button onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane" style="color:var(--primary); font-size:1.1rem;"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- 7. VIEW: PREMIUM UPGRADE INTERFACE --- -->
+        <section id="view-premium" class="app-view">
+            <div class="main-content-panel" style="width:100%;">
+                <h2 class="section-title">Upgrade to HeartSync Premium</h2>
+                <p class="section-subtitle">Unlock advanced targeting vectors and profile prioritization systems.</p>
+                
+                <div class="pricing-grid">
+                    <div class="pricing-card">
+                        <h3>HeartSync Basic</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Core Essential Interactions</p>
+                        <div class="price-box"><span class="price-amt">$0</span><span style="color:var(--text-muted)"> / month</span></div>
+                        <hr style="border:none; border-top:1px solid var(--border)">
+                        <ul class="pricing-features-list">
+                            <li><i class="fa-solid fa-check"></i> 25 Likes per calendar day</li>
+                            <li><i class="fa-solid fa-check"></i> Standard matching logic</li>
+                            <li><i class="fa-solid fa-check"></i> Basic structural profile setup</li>
+                        </ul>
+                        <button class="btn btn-secondary" style="width:100%">Current Plan</button>
+                    </div>
+
+                    <div class="pricing-card recommended">
+                        <div class="recommended-badge">Most Popular</div>
+                        <h3>HeartSync Gold</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Accelerated Relationship Connection</p>
+                        <div class="price-box"><span class="price-amt">$19.99</span><span style="color:var(--text-muted)"> / mo</span></div>
+                        <hr style="border:none; border-top:1px solid var(--border)">
+                        <ul class="pricing-features-list">
+                            <li><i class="fa-solid fa-check"></i> Unlimited daily profile likes</li>
+                            <li><i class="fa-solid fa-check"></i> See exact profiles who liked you</li>
+                            <li><i class="fa-solid fa-check"></i> 5 Free Super Likes weekly</li>
+                            <li><i class="fa-solid fa-check"></i> Incognito privacy controls toggle</li>
+                        </ul>
+                        <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout('gold')" id="premium-btn-gold">Upgrade Account</button>
+                    </div>
+
+                    <div class="pricing-card">
+                        <h3>HeartSync Platinum</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Maximum Visibility &amp; Priority Matching</p>
+                        <div class="price-box"><span class="price-amt">$34.99</span><span style="color:var(--text-muted)"> / mo</span></div>
+                        <hr style="border:none; border-top:1px solid var(--border)">
+                        <ul class="pricing-features-list">
+                            <li><i class="fa-solid fa-check"></i> Everything in Gold</li>
+                            <li><i class="fa-solid fa-check"></i> Priority placement in Discover</li>
+                            <li><i class="fa-solid fa-check"></i> Message before matching</li>
+                            <li><i class="fa-solid fa-check"></i> Dedicated support</li>
+                        </ul>
+                        <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout('platinum')" id="premium-btn-platinum">Upgrade Account</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- --- 8. VIEW: SYSTEM CONFIGURATION SETTINGS --- -->
+        <section id="view-settings" class="app-view">
+            <div class="main-content-panel" style="width:100%;">
+                <div class="settings-container">
+                    <div class="settings-nav">
+                        <button class="settings-nav-btn active-settings-tab" onclick="switchSettingsTab(event, 's-account')"><i class="fa-solid fa-user"></i> Account Profile</button>
+                        <button class="settings-nav-btn" onclick="switchSettingsTab(event, 's-notifications')"><i class="fa-solid fa-bell"></i> Notifications</button>
+                        <button class="settings-nav-btn" onclick="switchSettingsTab(event, 's-privacy')"><i class="fa-solid fa-lock"></i> Privacy Settings</button>
+                    </div>
+                    <div class="settings-content-panel">
+                        <!-- Pane 1: Profile -->
+                        <div class="settings-pane active-pane" id="s-account">
+                            <h3 style="margin-bottom:24px;">Edit Account Profile</h3>
+                            <div class="form-group">
+                                <label class="form-label">Display Name</label>
+                                <input type="text" class="form-control" id="set-name">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Update Display Location</label>
+                                <input type="text" class="form-control" id="set-location" placeholder="Paris, France">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Bio</label>
+                                <textarea class="form-control" id="set-bio" rows="4"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Registered Email</label>
+                                <input type="email" class="form-control" id="set-email" disabled>
+                            </div>
+                            <button class="btn btn-primary" style="margin-top:10px;" onclick="saveAccountSettings()">Save Alterations</button>
+                            <button class="btn btn-secondary" style="margin-top:10px; margin-left:10px;" onclick="logout()">Log Out</button>
+                        </div>
+                        <!-- Pane 2: Notifications -->
+                        <div class="settings-pane" id="s-notifications">
+                            <h3 style="margin-bottom:24px;">Notification Toggles</h3>
+                            <div class="form-group" style="display:flex; justify-content:between; align-items:center; gap:20px;">
+                                <label class="form-label" style="margin:0; flex:1;">Email alerts for new matches</label>
+                                <input type="checkbox" id="set-notif-matches" style="width:22px; height:22px;" onchange="saveNotificationSettings()">
+                            </div>
+                            <div class="form-group" style="display:flex; justify-content:between; align-items:center; gap:20px; margin-top:20px;">
+                                <label class="form-label" style="margin:0; flex:1;">Push notifications for inbound messages</label>
+                                <input type="checkbox" id="set-notif-messages" style="width:22px; height:22px;" onchange="saveNotificationSettings()">
+                            </div>
+                        </div>
+                        <!-- Pane 3: Privacy and Danger -->
+                        <div class="settings-pane" id="s-privacy">
+                            <h3 style="margin-bottom:24px;">Security Settings</h3>
+                            <div class="form-group" style="display:flex; justify-content:between; align-items:center; gap:20px;">
+                                <label class="form-label" style="margin:0; flex:1;">Hide my profile from Discover (incognito)</label>
+                                <input type="checkbox" id="set-incognito" style="width:22px; height:22px;" onchange="saveNotificationSettings()">
+                            </div>
+                            
+                            <div class="danger-zone">
+                                <h4 style="color:#ff7675; margin-bottom:8px;">Danger Zone Management</h4>
+                                <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Deleting your account permanently removes your profile, matches, and message history. This action cannot be undone.</p>
+                                <button class="btn" style="background-color:#ff7675; color:white;" onclick="deleteAccountPermanently()">Delete Profile Permanently</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- CORE VANILLA JAVASCRIPT APP STATE MACHINE ENGINE -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        /* ============================================================
+           HEARTSYNC — REAL APP ENGINE
+           Talks to the Express/PostgreSQL backend in server.js and
+           uses Socket.io for live match + message delivery.
+           ============================================================ */
+
+        const API = ''; // same-origin
+        const TOKEN_KEY = 'heartsync_token';
+
+        let state = {
+            currentView: "home",
+            user: null,           // full profile of the logged-in user, once fetched
+            authMode: "signup",
+            onboardingStep: 1,
+            discoverProfiles: [],
+            matches: [],
+            activeChatId: null,
+            activeChatMatch: null,
+            notifications: [],
+            socket: null
+        };
+
+        const INTEREST_POOL = ["Travel", "Music", "Fitness", "Cooking", "Photography", "Gaming", "Reading", "Movies", "Art", "Yoga", "Hiking", "Technology"];
+
+        /* ---------------- API HELPERS ---------------- */
+        function getToken() { return localStorage.getItem(TOKEN_KEY); }
+        function setToken(t) { localStorage.setItem(TOKEN_KEY, t); }
+        function clearToken() { localStorage.removeItem(TOKEN_KEY); }
+
+        async function apiFetch(path, options = {}) {
+            const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+            const token = getToken();
+            if (token) headers['Authorization'] = `Bearer ${token}`;
+            const res = await fetch(API + path, Object.assign({}, options, { headers }));
+            let data = {};
+            try { data = await res.json(); } catch (e) { /* no body */ }
+            if (!res.ok) {
+                const err = new Error(data.error || 'Something went wrong.');
+                err.status = res.status;
+                throw err;
+            }
+            return data;
+        }
+
+        /* ---------------- BOOTSTRAP ---------------- */
+        document.addEventListener('DOMContentLoaded', async () => {
+            initScrollReveal();
+            initNavbarScrollEffect();
+            await loadPublicStats();
+
+            const token = getToken();
+            if (token) {
+                try {
+                    const { user } = await apiFetch('/api/me');
+                    onAuthSuccess(user, false);
+                    if (!user.onboardingComplete) {
+                        navigateTo('onboarding');
+                        initializeOnboardingHobbies();
+                    } else {
+                        navigateTo('dashboard');
+                    }
+                } catch (err) {
+                    clearToken();
+                }
+            }
+        });
+
+        async function loadPublicStats() {
+            try {
+                const stats = await apiFetch('/api/public/stats');
+                const els = document.querySelectorAll('.stat-item strong[data-count]');
+                if (els[0]) els[0].setAttribute('data-count', stats.matches);
+                if (els[1]) els[1].setAttribute('data-count', stats.members);
+                if (els[2]) els[2].setAttribute('data-count', stats.verifiedPercent);
+            } catch (err) {
+                // Public stats are best-effort; fall back to the static markup values.
+            }
+        }
+
+        /* ---------------- ROUTER ---------------- */
+        function navigateTo(viewId) {
+            const protectedViews = ["dashboard", "discover", "matches", "messages", "settings", "premium"];
+            if (!state.user && protectedViews.includes(viewId)) {
+                openAuthModal('signup');
+                return;
+            }
+
+            state.currentView = viewId;
+            document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active-view'));
+            const targetView = document.getElementById(`view-${viewId}`);
+            if (targetView) targetView.classList.add('active-view');
+
+            document.querySelectorAll('#desktop-links a').forEach(link => {
+                const clickAttr = link.getAttribute('onclick');
+                if (clickAttr && clickAttr.includes(viewId)) link.parentElement.classList.add('active');
+                else link.parentElement.classList.remove('active');
+            });
+
+            document.querySelectorAll('.mobile-nav-item').forEach(item => item.classList.remove('active'));
+            const mobileNavItem = document.getElementById(`m-nav-${viewId}`);
+            if (mobileNavItem) mobileNavItem.classList.add('active');
+
+            if (viewId === 'dashboard') renderDashboardData();
+            if (viewId === 'discover') loadDiscoverDeck();
+            if (viewId === 'matches') renderMatchesGrid();
+            if (viewId === 'messages') {
+                renderConversationsList();
+                document.querySelector('.chat-sidebar').style.display = "flex";
+                document.getElementById('activeChatWindow').style.display = "none";
+            }
+            if (viewId === 'settings') populateSettingsForm();
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        /* ---------------- THEME ---------------- */
+        function toggleTheme() {
+            const body = document.body;
+            const newTheme = body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            document.getElementById('theme-icon').className = newTheme === 'light' ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+        }
+
+        /* ---------------- AUTH ---------------- */
+        function openAuthModal(mode) {
+            state.authMode = mode;
+            const overlay = document.getElementById('authModalOverlay');
+            const title = document.getElementById('authModalTitle');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            const nameGroup = document.getElementById('authNameGroup');
+            document.getElementById('authErrorMsg').style.display = "none";
+
+            if (mode === 'login') {
+                title.innerText = "Log Back In";
+                submitBtn.innerText = "Access Account";
+                nameGroup.style.display = "none";
+            } else {
+                title.innerText = "Create Your Account";
+                submitBtn.innerText = "Get Started For Free";
+                nameGroup.style.display = "block";
+            }
+            overlay.style.display = "flex";
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModalOverlay').style.display = "none";
+        }
+
+        async function handleAuthSubmit(event) {
+            event.preventDefault();
+            const email = document.getElementById('auth-email').value.trim();
+            const password = document.getElementById('auth-password').value;
+            const name = document.getElementById('auth-name').value.trim();
+            const errorEl = document.getElementById('authErrorMsg');
+            const submitBtn = document.getElementById('authSubmitBtn');
+            errorEl.style.display = "none";
+            submitBtn.disabled = true;
+
+            try {
+                let data;
+                if (state.authMode === 'signup') {
+                    if (!name) { throw new Error('Please enter your first name.'); }
+                    data = await apiFetch('/api/auth/signup', { method: 'POST', body: JSON.stringify({ email, password, name }) });
+                } else {
+                    data = await apiFetch('/api/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
+                }
+                setToken(data.token);
+                closeAuthModal();
+                onAuthSuccess(data.user, true);
+
+                if (!data.user.onboardingComplete) {
+                    navigateTo('onboarding');
+                    initializeOnboardingHobbies();
+                } else {
+                    navigateTo('dashboard');
+                }
+            } catch (err) {
+                errorEl.innerText = err.message;
+                errorEl.style.display = "block";
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        function onAuthSuccess(user, isFresh) {
+            state.user = user;
+            document.getElementById('login-btn-nav').style.display = "none";
+            document.getElementById('signup-btn-nav').style.display = "none";
+            const navAvatar = document.getElementById('user-avatar-nav');
+            navAvatar.style.display = "block";
+            document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
+            connectSocket();
+            if (isFresh) showToast("Welcome!", `Signed in as ${user.name}.`, "fa-circle-check");
+        }
+
+        function logout() {
+            clearToken();
+            if (state.socket) state.socket.disconnect();
+            state.user = null;
+            document.getElementById('login-btn-nav').style.display = "inline-flex";
+            document.getElementById('signup-btn-nav').style.display = "inline-flex";
+            document.getElementById('user-avatar-nav').style.display = "none";
+            navigateTo('home');
+        }
+
+        function fallbackAvatar(name) {
+            const initial = (name || '?').charAt(0).toUpperCase();
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="#ff4b72"/><text x="50%" y="55%" font-family="sans-serif" font-size="90" fill="white" text-anchor="middle" dominant-baseline="middle">${initial}</text></svg>`;
+            return `data:image/svg+xml;base64,${btoa(svg)}`;
+        }
+
+        /* ---------------- REAL-TIME (Socket.io) ---------------- */
+        function connectSocket() {
+            if (state.socket) state.socket.disconnect();
+            state.socket = io({ auth: { token: getToken() } });
+
+            state.socket.on('new_match', (payload) => {
+                showToast("It's a Match! 🎉", `You and ${payload.profile.name} liked each other.`, "fa-heart");
+                state.notifications.unshift({ text: `Mutual connection made with ${payload.profile.name}!`, time: "Just now", icon: "fa-heart", bg: "var(--primary-light)" });
+                if (state.currentView === 'matches') renderMatchesGrid();
+                if (state.currentView === 'dashboard') renderDashboardData();
+            });
+
+            state.socket.on('new_message', (payload) => {
+                if (state.activeChatId === payload.matchId) {
+                    appendMessageBubble({ sender: 'them', text: payload.text, time: payload.time });
+                } else {
+                    showToast("New Message", payload.text, "fa-comment");
+                }
+                if (state.currentView === 'messages') renderConversationsList();
+            });
+
+            state.socket.on('inbox_update', () => {
+                if (state.currentView === 'messages') renderConversationsList();
+            });
+        }
+
+        /* ---------------- ONBOARDING ---------------- */
+        function initializeOnboardingHobbies() {
+            const container = document.getElementById('interestTagsContainer');
+            container.innerHTML = "";
+            INTEREST_POOL.forEach(interest => {
+                const chip = document.createElement('div');
+                chip.className = "tag-chip";
+                chip.innerText = interest;
+                chip.onclick = () => chip.classList.toggle('selected');
+                container.appendChild(chip);
+            });
+            if (state.user) {
+                document.getElementById('ob-name').value = state.user.name || '';
+            }
+            renderOnboardingPhotoGrid();
+        }
+
+        async function moveWizardStep(direction) {
+            const currentStepEl = document.getElementById(`step-${state.onboardingStep}`);
+
+            if (direction === 1) {
+                const inputs = currentStepEl.querySelectorAll('input[required], textarea[required]');
+                let valid = true;
+                inputs.forEach(input => { if (!input.value) { input.reportValidity(); valid = false; } });
+                if (!valid) return;
+            }
+
+            if (direction === 1 && state.onboardingStep === 4) {
+                await finishOnboarding();
+                return;
+            }
+
+            currentStepEl.classList.remove('active-step');
+            state.onboardingStep += direction;
+            document.getElementById(`step-${state.onboardingStep}`).classList.add('active-step');
+
+            const fillPct = (state.onboardingStep / 4) * 100;
+            document.getElementById('onboardingProgress').style.width = `${fillPct}%`;
+            document.getElementById('ob-back-btn').style.visibility = state.onboardingStep === 1 ? "hidden" : "visible";
+            document.getElementById('ob-next-btn').innerText = state.onboardingStep === 4 ? "Complete Verification" : "Continue";
+        }
+
+        function handleOnboardingSubmit(event) {
+            event.preventDefault();
+        }
+
+        async function finishOnboarding() {
+            const nextBtn = document.getElementById('ob-next-btn');
+            nextBtn.disabled = true;
+            nextBtn.innerText = "Saving...";
+            try {
+                const selectedHobbies = Array.from(document.querySelectorAll('#interestTagsContainer .tag-chip.selected')).map(c => c.innerText);
+                const payload = {
+                    name: document.getElementById('ob-name').value.trim(),
+                    dob: document.getElementById('ob-dob').value,
+                    gender: document.getElementById('ob-gender').value,
+                    interestedIn: document.getElementById('ob-interested').value,
+                    location: document.getElementById('ob-location').value.trim(),
+                    goals: document.getElementById('ob-goals').value,
+                    hobbies: selectedHobbies,
+                    bio: document.getElementById('ob-bio').value.trim(),
+                    completeOnboarding: true
+                };
+                const { user } = await apiFetch('/api/me', { method: 'PUT', body: JSON.stringify(payload) });
+                state.user = user;
+                document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
+                navigateTo('dashboard');
+            } catch (err) {
+                showToast("Couldn't Save Profile", err.message, "fa-triangle-exclamation");
+            } finally {
+                nextBtn.disabled = false;
+                nextBtn.innerText = "Complete Verification";
+            }
+        }
+
+        function handlePhotoFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 8 * 1024 * 1024) {
+                showToast("Photo Too Large", "Please choose an image under 8MB.", "fa-triangle-exclamation");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const { user } = await apiFetch('/api/me/photos', { method: 'POST', body: JSON.stringify({ photoDataUrl: reader.result }) });
+                    state.user = user;
+                    renderOnboardingPhotoGrid();
+                    document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
+                    showToast("Photo Uploaded", "Added to your profile.", "fa-camera");
+                } catch (err) {
+                    showToast("Upload Failed", err.message, "fa-triangle-exclamation");
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = "";
+        }
+
+        function renderOnboardingPhotoGrid() {
+            const grid = document.getElementById('ob-photo-grid');
+            grid.innerHTML = "";
+            const photos = (state.user && state.user.photos) || [];
+            photos.forEach((src, i) => {
+                const item = document.createElement('div');
+                item.className = "photo-preview-item";
+                item.style.position = "relative";
+                item.innerHTML = `<img src="${src}" alt="Uploaded photo ${i + 1}">
+                    <button type="button" onclick="removeOnboardingPhoto(${i})" style="position:absolute; top:4px; right:4px; background:rgba(0,0,0,0.6); color:white; border-radius:50%; width:22px; height:22px; font-size:0.7rem;"><i class="fa-solid fa-xmark"></i></button>`;
+                grid.appendChild(item);
+            });
+            if (photos.length < 6) {
+                const addBtn = document.createElement('div');
+                addBtn.className = "photo-preview-item";
+                addBtn.style.cssText = "display:flex; align-items:center; justify-content:center; border:2px dashed var(--border); cursor:pointer;";
+                addBtn.innerHTML = `<i class="fa-solid fa-plus" style="color:var(--text-muted)"></i>`;
+                addBtn.onclick = () => document.getElementById('ob-photo-input').click();
+                grid.appendChild(addBtn);
+            }
+        }
+
+        async function removeOnboardingPhoto(index) {
+            try {
+                const { user } = await apiFetch(`/api/me/photos/${index}`, { method: 'DELETE' });
+                state.user = user;
+                renderOnboardingPhotoGrid();
+            } catch (err) {
+                showToast("Couldn't Remove Photo", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ---------------- DASHBOARD ---------------- */
+        async function renderDashboardData() {
+            if (!state.user) return;
+            document.getElementById('dash-user-avatar').src = state.user.avatar || fallbackAvatar(state.user.name);
+            document.getElementById('dash-user-name').innerText = `${state.user.name}, ${state.user.age || '—'}`;
+            document.getElementById('dash-user-location').innerText = state.user.location || "Add your location in Settings";
+
+            try {
+                const stats = await apiFetch('/api/stats');
+                document.getElementById('dash-matches-count').innerText = stats.totalMatches;
+                document.getElementById('dash-likes-count').innerText = stats.likesReceived;
+                document.getElementById('dash-completion-pct').innerText = `${stats.profileCompletion}%`;
+                const circumference = 88;
+                const offset = circumference - (circumference * stats.profileCompletion / 100);
+                document.getElementById('dash-completion-ring').setAttribute('stroke-dashoffset', offset);
+            } catch (err) { /* stats are non-critical */ }
+
+            try {
+                const { profiles } = await apiFetch('/api/discover');
+                const container = document.getElementById('dashboardRecommendations');
+                container.innerHTML = "";
+                if (profiles.length === 0) {
+                    container.innerHTML = `<p style="color:var(--text-muted);">No new profiles right now — check back soon.</p>`;
+                }
+                profiles.slice(0, 3).forEach(profile => {
+                    const item = document.createElement('div');
+                    item.className = "match-thumb-card";
+                    item.onclick = () => navigateTo('discover');
+                    item.innerHTML = `
+                        <img src="${profile.avatar || fallbackAvatar(profile.name)}" class="match-thumb-img" alt="${profile.name}">
+                        <div class="match-thumb-info">
+                            <strong>${profile.name}, ${profile.age || '—'}</strong>
+                            <p style="font-size:0.75rem; color:var(--text-muted)">${profile.location || 'Location not set'}</p>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } catch (err) { /* non-critical */ }
+        }
+
+        /* ---------------- DISCOVER / SWIPING ---------------- */
+        async function loadDiscoverDeck() {
+            const skeleton = document.getElementById('discoverSkeleton');
+            const container = document.getElementById('cardDeckContainer');
+            const emptyState = document.getElementById('deckEmptyState');
+            skeleton.style.display = "block";
+            container.innerHTML = "";
+            emptyState.style.display = "none";
+
+            try {
+                const { profiles } = await apiFetch('/api/discover');
+                state.discoverProfiles = applyClientFilters(profiles);
+                skeleton.style.display = "none";
+                renderDiscoverDeck();
+            } catch (err) {
+                skeleton.style.display = "none";
+                showToast("Couldn't Load Profiles", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        function applyClientFilters(profiles) {
+            const maxAge = parseInt(document.getElementById('filter-age').value, 10);
+            const goal = document.getElementById('filter-goals').value;
+            const verifiedOnly = document.getElementById('filter-verified').checked;
+            return profiles.filter(p => {
+                if (p.age && p.age > maxAge) return false;
+                if (goal && p.goals !== goal) return false;
+                if (verifiedOnly && !p.verified) return false;
+                return true;
+            });
+        }
+
+        function applyFiltersMock() {
+            showToast("Filters Applied", "Your discovery deck has been refreshed.", "fa-sliders");
+            loadDiscoverDeck();
+        }
+
+        function resetDiscoverDeck() {
+            loadDiscoverDeck();
+        }
+
+        function renderDiscoverDeck() {
+            const container = document.getElementById('cardDeckContainer');
+            const emptyState = document.getElementById('deckEmptyState');
+            container.innerHTML = "";
+
+            if (state.discoverProfiles.length === 0) {
+                emptyState.style.display = "block";
+                return;
+            }
+            emptyState.style.display = "none";
+
+            state.discoverProfiles.forEach((profile, index) => {
+                const card = document.createElement('div');
+                card.className = "profile-card";
+                card.style.zIndex = state.discoverProfiles.length - index;
+                card.style.transform = `scale(${1 - index * 0.04}) translateY(${index * 12}px)`;
+
+                const interestChipsString = (profile.hobbies || []).map(t => `<span class="tag-chip" style="padding:4px 10px; font-size:0.75rem;">${t}</span>`).join('');
+
+                card.innerHTML = `
+                    <div class="card-img-holder">
+                        <img src="${profile.avatar || fallbackAvatar(profile.name)}" alt="${profile.name}">
+                        <div class="card-gradient"></div>
+                        <div class="card-floating-info">
+                            <div class="card-meta-line">
+                                ${profile.name}, ${profile.age || '—'}
+                                ${profile.verified ? '<i class="fa-solid fa-circle-check verified-badge"></i>' : ''}
+                            </div>
+                            <p style="font-size:0.9rem; opacity:0.9; margin-top:4px;"><i class="fa-solid fa-location-dot"></i> ${profile.location || 'Location not shared'}</p>
+                        </div>
+                    </div>
+                    <div class="card-body-details">
+                        <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:12px; height:40px; overflow:hidden; text-overflow:ellipsis;">${profile.bio || 'This member has not written a bio yet.'}</p>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">${interestChipsString}</div>
+                        <div class="swipe-actions">
+                            <button class="btn-icon btn-action-pass" onclick="executeSwipeAction('pass', ${profile.id}, event)" aria-label="Pass profile"><i class="fa-solid fa-xmark"></i></button>
+                            <button class="btn-icon btn-action-super" onclick="executeSwipeAction('superlike', ${profile.id}, event)" aria-label="Superlike profile"><i class="fa-solid fa-bolt"></i></button>
+                            <button class="btn-icon btn-action-like" onclick="executeSwipeAction('like', ${profile.id}, event)" aria-label="Like profile"><i class="fa-solid fa-heart"></i></button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+                if (index === 0) attachDragToSwipe(card, profile.id);
+            });
+        }
+
+        async function executeSwipeAction(action, id, event) {
+            if (event) event.stopPropagation();
+            const container = document.getElementById('cardDeckContainer');
+            const topCard = container.querySelector('.profile-card');
+            if (!topCard) return;
+
+            if (action === 'like') topCard.style.transform = 'translate(150%, -20px) rotate(20deg)';
+            else if (action === 'superlike') topCard.style.transform = 'translateY(-150%) scale(0.9)';
+            else topCard.style.transform = 'translate(-150%, -20px) rotate(-20deg)';
+            topCard.style.opacity = '0';
+
+            const matchedProfile = state.discoverProfiles.find(p => p.id === id);
+
+            try {
+                const result = await apiFetch('/api/swipe', { method: 'POST', body: JSON.stringify({ targetId: id, action }) });
+                setTimeout(() => {
+                    state.discoverProfiles = state.discoverProfiles.filter(p => p.id !== id);
+                    if (result.matched) {
+                        showToast("It's a Match! 🎉", `You and ${result.matchedProfile.name} liked each other.`, "fa-heart");
+                    }
+                    renderDiscoverDeck();
+                }, 300);
+            } catch (err) {
+                setTimeout(() => {
+                    topCard.style.transform = "";
+                    topCard.style.opacity = "1";
+                    showToast("Swipe Failed", err.message, "fa-triangle-exclamation");
+                }, 300);
+            }
+        }
+
+        /* ---------------- MATCHES ---------------- */
+        async function renderMatchesGrid() {
+            const grid = document.getElementById('matchesMasterGrid');
+            grid.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Loading matches...</p>`;
+            try {
+                const { matches } = await apiFetch('/api/matches');
+                state.matches = matches;
+                grid.innerHTML = "";
+                if (matches.length === 0) {
+                    grid.innerHTML = `<p style="color:var(--text-muted); text-align:center; grid-column:1/-1; padding:40px;">No matches yet. Begin discovering profiles.</p>`;
+                    return;
+                }
+                matches.forEach(match => {
+                    const card = document.createElement('div');
+                    card.className = "match-thumb-card";
+                    card.onclick = () => { navigateTo('messages'); openConversationThread(match.matchId); };
+                    card.innerHTML = `
+                        ${match.unread ? '<span class="match-badge-new">New</span>' : ''}
+                        <img src="${match.avatar || fallbackAvatar(match.name)}" class="match-thumb-img" alt="${match.name}">
+                        <div class="match-thumb-info">
+                            <strong>${match.name}</strong>
+                            <p style="font-size:0.75rem; color:var(--text-muted)">Click to open chat</p>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                grid.innerHTML = `<p style="color:var(--text-muted); grid-column:1/-1;">Couldn't load matches: ${err.message}</p>`;
+            }
+        }
+
+        /* ---------------- MESSAGING ---------------- */
+        async function renderConversationsList(filterText) {
+            const ul = document.getElementById('chatConversationsUl');
+            try {
+                const { matches } = await apiFetch('/api/matches');
+                state.matches = matches;
+            } catch (err) {
+                ul.innerHTML = `<li style="padding:24px 16px; color:var(--text-muted); text-align:center; font-size:0.9rem;">${err.message}</li>`;
+                return;
+            }
+
+            ul.innerHTML = "";
+            const query = (filterText || "").trim().toLowerCase();
+            const visible = query
+                ? state.matches.filter(m => m.name.toLowerCase().includes(query) || (m.lastMsg || '').toLowerCase().includes(query))
+                : state.matches;
+
+            if (visible.length === 0) {
+                ul.innerHTML = `<li style="padding:24px 16px; color:var(--text-muted); text-align:center; font-size:0.9rem;">No conversations found.</li>`;
+                return;
+            }
+
+            visible.forEach(match => {
+                const li = document.createElement('li');
+                li.className = `conversation-item ${state.activeChatId === match.matchId ? 'active-chat' : ''}`;
+                li.onclick = () => openConversationThread(match.matchId);
+                const timeLabel = match.time ? new Date(match.time).toLocaleDateString([], { month: 'short', day: 'numeric' }) : '';
+                li.innerHTML = `
+                    <div class="avatar-box">
+                        <img src="${match.avatar || fallbackAvatar(match.name)}" alt="${match.name}">
+                        <div class="online-status"></div>
+                    </div>
+                    <div class="chat-item-body">
+                        <div class="chat-item-header">
+                            <span class="chat-item-name">${match.name}</span>
+                            <span class="chat-item-time">${timeLabel}</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:10px;">
+                            <p class="chat-item-preview">${match.lastMsg}</p>
+                            ${match.unread ? '<span class="unread-count">•</span>' : ''}
+                        </div>
+                    </div>
+                `;
+                ul.appendChild(li);
+            });
+        }
+
+        function filterConversations(value) {
+            renderConversationsList(value);
+        }
+
+        async function openConversationThread(matchId) {
+            state.activeChatId = matchId;
+            state.activeChatMatch = state.matches.find(m => m.matchId === matchId);
+
+            document.getElementById('chatWindowPlaceholder').style.display = "none";
+            document.getElementById('chatWindowActiveStructure').style.display = "flex";
+
+            if (state.activeChatMatch) {
+                document.getElementById('activeChatName').innerText = state.activeChatMatch.name;
+                document.getElementById('activeChatAvatar').src = state.activeChatMatch.avatar || fallbackAvatar(state.activeChatMatch.name);
+            }
+
+            if (state.socket) state.socket.emit('join_match', matchId);
+
+            const stream = document.getElementById('chatMessageStream');
+            stream.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">Loading messages...</p>`;
+            try {
+                const { messages } = await apiFetch(`/api/messages/${matchId}`);
+                stream.innerHTML = "";
+                messages.forEach(m => appendMessageBubble(m, false));
+                stream.scrollTop = stream.scrollHeight;
+            } catch (err) {
+                stream.innerHTML = `<p style="text-align:center; color:var(--text-muted); padding:20px;">${err.message}</p>`;
+            }
+
+            renderConversationsList();
+            document.querySelector('.chat-sidebar').style.display = "none";
+            document.getElementById('activeChatWindow').style.display = "flex";
+        }
+
+        function closeActiveChat() {
+            document.querySelector('.chat-sidebar').style.display = "flex";
+            document.getElementById('activeChatWindow').style.display = "none";
+        }
+
+        function appendMessageBubble(msg, scroll = true) {
+            const stream = document.getElementById('chatMessageStream');
+            const wrap = document.createElement('div');
+            wrap.className = `msg-bubble-wrap ${msg.sender === 'me' ? 'msg-sent' : ''}`;
+            const avatarSrc = msg.sender === 'me'
+                ? ((state.user && state.user.avatar) || fallbackAvatar(state.user ? state.user.name : 'Me'))
+                : ((state.activeChatMatch && state.activeChatMatch.avatar) || fallbackAvatar('?'));
+            const timeLabel = msg.time ? new Date(msg.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+            wrap.innerHTML = `
+                <img src="${avatarSrc}" class="msg-bubble-avatar" alt="Avatar">
+                <div class="msg-bubble-content">
+                    <p></p>
+                    <span class="msg-timestamp">${timeLabel}</span>
+                </div>
+            `;
+            wrap.querySelector('p').innerText = msg.text; // textContent avoids HTML injection
+            stream.appendChild(wrap);
+            if (scroll) stream.scrollTop = stream.scrollHeight;
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInputMessageField');
+            const text = input.value.trim();
+            if (!text || !state.activeChatId) return;
+            input.value = "";
+
+            try {
+                const { message } = await apiFetch(`/api/messages/${state.activeChatId}`, { method: 'POST', body: JSON.stringify({ text }) });
+                appendMessageBubble(message);
+                renderConversationsList();
+            } catch (err) {
+                showToast("Message Failed", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ---------------- NOTIFICATIONS PANEL ---------------- */
+        function toggleNotifications() {
+            const panel = document.getElementById('notificationsPanel');
+            const willShow = panel.style.display !== "block";
+            panel.style.display = willShow ? "block" : "none";
+            if (willShow) {
+                const list = document.getElementById('notificationsList');
+                list.innerHTML = "";
+                if (state.notifications.length === 0) {
+                    list.innerHTML = `<li style="padding:16px; color:var(--text-muted); text-align:center;">You're all caught up.</li>`;
+                    return;
+                }
+                state.notifications.forEach(n => {
+                    const li = document.createElement('li');
+                    li.className = "notif-item";
+                    li.innerHTML = `
+                        <div class="notif-icon-box" style="background-color:${n.bg}; color:var(--primary)"><i class="fa-solid ${n.icon}"></i></div>
+                        <div><p style="font-size:0.9rem; font-weight:500;"></p><small style="color:var(--text-muted); font-size:0.75rem;">${n.time}</small></div>
+                    `;
+                    li.querySelector('p').innerText = n.text;
+                    list.appendChild(li);
+                });
+            }
+        }
+
+        /* ---------------- SETTINGS ---------------- */
+        function switchSettingsTab(event, paneId) {
+            document.querySelectorAll('.settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
+            document.querySelectorAll('.settings-pane').forEach(pane => pane.classList.remove('active-pane'));
+            event.currentTarget.classList.add('active-settings-tab');
+            document.getElementById(paneId).classList.add('active-pane');
+        }
+
+        function populateSettingsForm() {
+            if (!state.user) return;
+            document.getElementById('set-name').value = state.user.name || '';
+            document.getElementById('set-location').value = state.user.location || '';
+            document.getElementById('set-bio').value = state.user.bio || '';
+            document.getElementById('set-email').value = state.user.email || '';
+            document.getElementById('set-notif-matches').checked = !!state.user.notifEmailMatches;
+            document.getElementById('set-notif-messages').checked = !!state.user.notifPushMessages;
+            document.getElementById('set-incognito').checked = !!state.user.incognito;
+        }
+
+        async function saveAccountSettings() {
+            try {
+                const payload = {
+                    name: document.getElementById('set-name').value.trim(),
+                    location: document.getElementById('set-location').value.trim(),
+                    bio: document.getElementById('set-bio').value.trim()
+                };
+                const { user } = await apiFetch('/api/me', { method: 'PUT', body: JSON.stringify(payload) });
+                state.user = user;
+                showToast("Saved", "Your profile has been updated.", "fa-circle-check");
+            } catch (err) {
+                showToast("Couldn't Save", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        async function saveNotificationSettings() {
+            try {
+                const payload = {
+                    notifEmailMatches: document.getElementById('set-notif-matches').checked,
+                    notifPushMessages: document.getElementById('set-notif-messages').checked,
+                    incognito: document.getElementById('set-incognito').checked
+                };
+                const { user } = await apiFetch('/api/me', { method: 'PUT', body: JSON.stringify(payload) });
+                state.user = user;
+                showToast("Preferences Saved", "Your settings were updated.", "fa-circle-check");
+            } catch (err) {
+                showToast("Couldn't Save", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        async function deleteAccountPermanently() {
+            if (!confirm("This will permanently delete your account, matches, and messages. This cannot be undone. Continue?")) return;
+            try {
+                await apiFetch('/api/me', { method: 'DELETE' });
+                showToast("Account Deleted", "Your account has been removed.", "fa-circle-check");
+                setTimeout(() => logout(), 1200);
+            } catch (err) {
+                showToast("Couldn't Delete Account", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ---------------- PREMIUM (real Stripe checkout, opt-in) ---------------- */
+        async function startPremiumCheckout(tier) {
+            const btn = document.getElementById(`premium-btn-${tier}`);
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Redirecting...";
+            try {
+                const { url } = await apiFetch('/api/premium/checkout', { method: 'POST', body: JSON.stringify({ tier }) });
+                window.location.href = url;
+            } catch (err) {
+                showToast("Checkout Unavailable", err.message, "fa-triangle-exclamation");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        /* ---------------- MISC UI (carousel, toasts, faq, reveals, drag-swipe) ---------------- */
+        let carouselIdx = 0;
+        function moveCarousel(dir) {
+            const track = document.getElementById('testimonialTrack');
+            const items = document.querySelectorAll('.testimonial-item');
+            carouselIdx = (carouselIdx + dir + items.length) % items.length;
+            track.style.transform = `translateX(-${carouselIdx * 100}%)`;
+        }
+
+        function showToast(title, message, icon = "fa-circle-check") {
+            const stack = document.getElementById('toastStack');
+            const toast = document.createElement('div');
+            toast.className = "toast-item";
+            toast.innerHTML = `
+                <div class="toast-icon"><i class="fa-solid ${icon}"></i></div>
+                <div class="toast-body"><strong></strong><span></span></div>
+                <button class="toast-close" onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+            `;
+            toast.querySelector('strong').innerText = title;
+            toast.querySelector('span').innerText = message;
+            stack.appendChild(toast);
+            requestAnimationFrame(() => toast.classList.add('toast-visible'));
+            setTimeout(() => {
+                toast.classList.remove('toast-visible');
+                setTimeout(() => toast.remove(), 400);
+            }, 4200);
+        }
+
+        function toggleFaq(btn) {
+            const item = btn.closest('.faq-item');
+            const wasOpen = item.classList.contains('faq-open');
+            item.parentElement.querySelectorAll('.faq-item').forEach(i => i.classList.remove('faq-open'));
+            if (!wasOpen) item.classList.add('faq-open');
+        }
+
+        function animateStatCounters() {
+            document.querySelectorAll('.stat-item strong[data-count]').forEach(el => {
+                const target = parseFloat(el.getAttribute('data-count'));
+                const decimals = parseInt(el.getAttribute('data-decimals') || "0");
+                const suffix = el.getAttribute('data-suffix') || "";
+                const duration = 1400;
+                const start = performance.now();
+                function tick(now) {
+                    const progress = Math.min((now - start) / duration, 1);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const value = target * eased;
+                    el.innerText = (decimals ? value.toFixed(decimals) : Math.floor(value).toLocaleString()) + suffix;
+                    if (progress < 1) requestAnimationFrame(tick);
+                }
+                requestAnimationFrame(tick);
+            });
+        }
+
+        function initScrollReveal() {
+            const revealEls = document.querySelectorAll('.reveal-up');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        if (entry.target.classList.contains('stats-bar')) animateStatCounters();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            revealEls.forEach(el => observer.observe(el));
+        }
+
+        function initNavbarScrollEffect() {
+            const navbar = document.getElementById('mainNavbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 24) navbar.classList.add('navbar-scrolled');
+                else navbar.classList.remove('navbar-scrolled');
+            });
+        }
+
+        function attachDragToSwipe(card, profileId) {
+            let startX = 0, startY = 0, currentX = 0, dragging = false;
+
+            function onPointerDown(e) {
+                dragging = true;
+                startX = (e.touches ? e.touches[0].clientX : e.clientX);
+                startY = (e.touches ? e.touches[0].clientY : e.clientY);
+                card.style.transition = "none";
+            }
+            function onPointerMove(e) {
+                if (!dragging) return;
+                const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+                const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+                currentX = clientX - startX;
+                const deltaY = (clientY - startY) * 0.15;
+                const rotate = currentX * 0.06;
+                card.style.transform = `translate(${currentX}px, ${deltaY}px) rotate(${rotate}deg)`;
+                card.style.setProperty('--swipe-opacity-like', Math.max(0, Math.min(currentX / 120, 1)));
+                card.style.setProperty('--swipe-opacity-pass', Math.max(0, Math.min(-currentX / 120, 1)));
+            }
+            function onPointerUp() {
+                if (!dragging) return;
+                dragging = false;
+                card.style.transition = "";
+                if (currentX > 110) executeSwipeAction('like', profileId);
+                else if (currentX < -110) executeSwipeAction('pass', profileId);
+                else card.style.transform = "";
+                currentX = 0;
+            }
+
+            card.addEventListener('mousedown', onPointerDown);
+            card.addEventListener('touchstart', onPointerDown, { passive: true });
+            window.addEventListener('mousemove', onPointerMove);
+            card.addEventListener('touchmove', onPointerMove, { passive: true });
+            window.addEventListener('mouseup', onPointerUp);
+            card.addEventListener('touchend', onPointerUp);
+        }
+    </script>
+</body>
+</html>
