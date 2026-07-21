@@ -497,7 +497,7 @@
             bottom: 10px;
             opacity: 0;
             animation-name: heartBubblePop;
-            animation-timing-function: ease-in-out;
+            animation-timing-function: linear;
             animation-iteration-count: infinite;
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));
             will-change: transform, opacity;
@@ -505,27 +505,32 @@
             transform-origin: center bottom;
         }
 
-        .bubble-heart-1  { left: 2%;  font-size: 2.4rem; color: var(--primary);   animation-duration: 7s;   animation-delay: 0s;    }
-        .bubble-heart-2  { left: 16%; font-size: 1.6rem; color: var(--secondary); animation-duration: 5.8s; animation-delay: 0.9s;  }
-        .bubble-heart-3  { left: 30%; font-size: 3rem;   color: var(--primary);   animation-duration: 8s;   animation-delay: 1.8s;  }
-        .bubble-heart-4  { left: 45%; font-size: 1.8rem; color: var(--secondary); animation-duration: 6.4s; animation-delay: 0.4s;  }
-        .bubble-heart-5  { left: 58%; font-size: 2.6rem; color: var(--primary);   animation-duration: 7.4s; animation-delay: 2.6s;  }
-        .bubble-heart-6  { left: 72%; font-size: 1.7rem; color: var(--secondary); animation-duration: 6s;   animation-delay: 1.3s;  }
-        .bubble-heart-7  { left: 86%; font-size: 2.2rem; color: var(--primary);   animation-duration: 7.6s; animation-delay: 3.4s;  }
-        .bubble-heart-8  { left: 95%; font-size: 1.5rem; color: var(--secondary); animation-duration: 5.6s; animation-delay: 2s;    }
-        .bubble-heart-9  { left: 10%; font-size: 1.9rem; color: var(--secondary); animation-duration: 6.6s; animation-delay: 4.1s;  }
-        .bubble-heart-10 { left: 24%; font-size: 2.8rem; color: var(--primary);   animation-duration: 8.2s; animation-delay: 3s;    }
-        .bubble-heart-11 { left: 63%; font-size: 2rem;   color: var(--secondary); animation-duration: 6.8s; animation-delay: 4.8s;  }
-        .bubble-heart-12 { left: 80%; font-size: 3.2rem; color: var(--primary);   animation-duration: 8.6s; animation-delay: 1s;    }
-        .bubble-heart-13 { left: 38%; font-size: 1.6rem; color: var(--secondary); animation-duration: 5.9s; animation-delay: 5.4s;  }
-        .bubble-heart-14 { left: 52%; font-size: 2.3rem; color: var(--primary);   animation-duration: 7.1s; animation-delay: 2.2s;  }
+        .bubble-heart-1  { left: 14%; font-size: 1.5rem;  color: var(--primary);   animation-duration: 7s;   animation-delay: 0s;    }
+        .bubble-heart-2  { left: 22%; font-size: 1.1rem;  color: var(--secondary); animation-duration: 5.8s; animation-delay: 0.9s;  }
+        .bubble-heart-3  { left: 30%; font-size: 1.9rem;  color: var(--primary);   animation-duration: 8s;   animation-delay: 1.8s;  }
+        .bubble-heart-4  { left: 38%; font-size: 1.2rem;  color: var(--secondary); animation-duration: 6.4s; animation-delay: 0.4s;  }
+        .bubble-heart-5  { left: 45%; font-size: 1.7rem;  color: var(--primary);   animation-duration: 7.4s; animation-delay: 2.6s;  }
+        .bubble-heart-6  { left: 52%; font-size: 1.1rem;  color: var(--secondary); animation-duration: 6s;   animation-delay: 1.3s;  }
+        .bubble-heart-7  { left: 60%; font-size: 1.4rem;  color: var(--primary);   animation-duration: 7.6s; animation-delay: 3.4s;  }
+        .bubble-heart-8  { left: 68%; font-size: 1rem;    color: var(--secondary); animation-duration: 5.6s; animation-delay: 2s;    }
+        .bubble-heart-9  { left: 18%; font-size: 1.3rem;  color: var(--secondary); animation-duration: 6.6s; animation-delay: 4.1s;  }
+        .bubble-heart-10 { left: 26%; font-size: 1.8rem;  color: var(--primary);   animation-duration: 8.2s; animation-delay: 3s;    }
+        .bubble-heart-11 { left: 56%; font-size: 1.3rem;  color: var(--secondary); animation-duration: 6.8s; animation-delay: 4.8s;  }
+        .bubble-heart-12 { left: 76%; font-size: 2rem;    color: var(--primary);   animation-duration: 8.6s; animation-delay: 1s;    }
+        .bubble-heart-13 { left: 42%; font-size: 1.1rem;  color: var(--secondary); animation-duration: 5.9s; animation-delay: 5.4s;  }
+        .bubble-heart-14 { left: 34%; font-size: 1.5rem;  color: var(--primary);   animation-duration: 7.1s; animation-delay: 2.2s;  }
+        .bubble-heart-15 { left: 10%; font-size: 1rem;    color: var(--secondary); animation-duration: 6.3s; animation-delay: 3.9s;  }
+        .bubble-heart-16 { left: 82%; font-size: 1.4rem;  color: var(--secondary); animation-duration: 7.8s; animation-delay: 0.7s;  }
+        .bubble-heart-17 { left: 64%; font-size: 1.6rem;  color: var(--primary);   animation-duration: 6.9s; animation-delay: 5.9s;  }
+        .bubble-heart-18 { left: 48%; font-size: 1rem;    color: var(--secondary); animation-duration: 5.5s; animation-delay: 1.6s;  }
+        .bubble-heart-19 { left: 72%; font-size: 1.2rem;  color: var(--primary);   animation-duration: 8.4s; animation-delay: 4.4s;  }
+        .bubble-heart-20 { left: 20%; font-size: 1.7rem;  color: var(--primary);   animation-duration: 7.3s; animation-delay: 6.4s;  }
 
         @keyframes heartBubblePop {
-            0% { transform: translateY(0) scale(0.35); opacity: 0; }
-            12% { transform: translateY(-67px) scale(0.7); opacity: 0.95; }
-            50% { transform: translateY(-280px) scale(1.15); opacity: 0.75; }
-            85% { transform: translateY(-476px) scale(1); opacity: 0.3; }
-            100% { transform: translateY(-560px) scale(0.9); opacity: 0; }
+            0%   { transform: translateY(0) scale(0.4);   opacity: 0; }
+            6%   { opacity: 1; }
+            80%  { opacity: 1; }
+            100% { transform: translateY(-520px) scale(1.05); opacity: 0; }
         }
 
         .hero-card {
@@ -2319,6 +2324,12 @@
                         <i class="fa-solid fa-heart bubble-heart bubble-heart-12"></i>
                         <i class="fa-solid fa-heart bubble-heart bubble-heart-13"></i>
                         <i class="fa-solid fa-heart bubble-heart bubble-heart-14"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-15"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-16"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-17"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-18"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-19"></i>
+                        <i class="fa-solid fa-heart bubble-heart bubble-heart-20"></i>
                     </div>
                     <div class="hero-img-stack">
                         <div class="hero-card hero-card-1">
