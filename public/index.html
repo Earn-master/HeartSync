@@ -497,9 +497,12 @@
             bottom: 10px;
             opacity: 0;
             animation-name: heartBubblePop;
-            animation-timing-function: ease-in;
+            animation-timing-function: ease-in-out;
             animation-iteration-count: infinite;
             filter: drop-shadow(0 4px 10px rgba(0,0,0,0.12));
+            will-change: transform, opacity;
+            backface-visibility: hidden;
+            transform-origin: center bottom;
         }
 
         .bubble-heart-1  { left: 2%;  font-size: 2.4rem; color: var(--primary);   animation-duration: 7s;   animation-delay: 0s;    }
@@ -519,9 +522,9 @@
 
         @keyframes heartBubblePop {
             0% { transform: translateY(0) scale(0.35); opacity: 0; }
-            12% { opacity: 0.95; }
+            12% { transform: translateY(-67px) scale(0.7); opacity: 0.95; }
             50% { transform: translateY(-280px) scale(1.15); opacity: 0.75; }
-            85% { opacity: 0.3; }
+            85% { transform: translateY(-476px) scale(1); opacity: 0.3; }
             100% { transform: translateY(-560px) scale(0.9); opacity: 0; }
         }
 
@@ -974,6 +977,13 @@
         @keyframes modalScale {
             from { transform: scale(0.95); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
+        }
+
+        .premium-modal {
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            text-align: left;
         }
 
         .close-modal {
@@ -2187,6 +2197,92 @@
         </div>
     </div>
 
+    <!-- --- PREMIUM UPGRADE: PAYMENT METHOD POP-UP --- -->
+    <div class="modal-overlay" id="premiumModalOverlay">
+        <div class="auth-modal premium-modal">
+            <button class="close-modal" onclick="closePremiumModal()"><i class="fa-solid fa-xmark"></i></button>
+            <h3 class="auth-title" style="text-align:left; margin-bottom:4px;">Choose How to Pay</h3>
+            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;" id="pm-selected-plan-label">Pick a payment method for your plan.</p>
+
+            <div class="form-group">
+                <label class="form-label">Plan</label>
+                <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="pm-tier" value="plus" checked onchange="onPaymentTierChange()"> Spark — $5/mo
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="pm-tier" value="gold" onchange="onPaymentTierChange()"> Gold — $12/mo
+                    </label>
+                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                        <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $29.99/mo
+                    </label>
+                </div>
+            </div>
+
+            <div class="settings-nav" style="margin-top:20px;">
+                <button class="settings-nav-btn active-settings-tab" id="pm-tab-btn-card" onclick="switchPaymentTab(event, 'pm-pane-card')"><i class="fa-solid fa-credit-card"></i> Card</button>
+                <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> Mobile Money</button>
+                <button class="settings-nav-btn" id="pm-tab-btn-paypal" onclick="switchPaymentTab(event, 'pm-pane-paypal')"><i class="fa-brands fa-paypal"></i> PayPal</button>
+                <button class="settings-nav-btn" id="pm-tab-btn-giftcard" onclick="switchPaymentTab(event, 'pm-pane-giftcard')"><i class="fa-solid fa-gift"></i> Gift Card</button>
+            </div>
+
+            <div class="settings-content-panel">
+                <!-- Card / Stripe -->
+                <div class="settings-pane active-pane" id="pm-pane-card">
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Pay securely by card through Stripe. You'll be redirected to complete checkout.</p>
+                    <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout(getSelectedPaymentTier())" id="pm-card-btn">Pay with Card</button>
+                </div>
+
+                <!-- Mobile Money / Paystack (Ghana, GHS only) -->
+                <div class="settings-pane" id="pm-pane-ussd">
+                    <div id="pm-ussd-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
+                    <div id="pm-ussd-form">
+                        <div class="form-group">
+                            <label class="form-label">Mobile Money Provider</label>
+                            <select class="form-control" id="pm-ussd-bank"></select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Mobile Money Number</label>
+                            <input type="tel" class="form-control" id="pm-ussd-phone" placeholder="e.g. 0551234567">
+                        </div>
+                        <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Pay with Mobile Money</button>
+                        <div id="pm-ussd-result" style="display:none; margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:10px; text-align:center;">
+                            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Approve the prompt sent to your phone to complete payment:</p>
+                            <div id="pm-ussd-code" style="font-size:1.4rem; font-weight:700; letter-spacing:1px;"></div>
+                            <p id="pm-ussd-status" style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Waiting for payment confirmation…</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PayPal (coming soon) -->
+                <div class="settings-pane" id="pm-pane-paypal">
+                    <div style="text-align:center; padding:24px 12px; border:1px dashed var(--border); border-radius:10px;">
+                        <i class="fa-brands fa-paypal" style="font-size:2rem; color:var(--text-muted);"></i>
+                        <p style="margin-top:10px; font-weight:600;">PayPal Checkout</p>
+                        <span class="admin-badge off" style="display:inline-block; margin-top:6px;">Coming Soon</span>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;">We're working on adding PayPal support. In the meantime, please use Card, Mobile Money, or Gift Card.</p>
+                        <button class="btn btn-secondary" style="width:100%; margin-top:12px;" disabled>PayPal — Coming Soon</button>
+                    </div>
+                </div>
+
+                <!-- Gift Card -->
+                <div class="settings-pane" id="pm-pane-giftcard">
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Enter your gift card ID/code below. Our team manually verifies each submission and unlocks Premium once approved — this usually just takes a moment to review.</p>
+                    <div class="form-group">
+                        <label class="form-label">Gift Card ID / Code</label>
+                        <input type="text" class="form-control" id="pm-giftcard-code" placeholder="e.g. HS-GIFT-XXXX-XXXX" maxlength="100">
+                    </div>
+                    <button class="btn btn-primary" style="width:100%" onclick="submitGiftcard()" id="pm-giftcard-btn">Submit Gift Card</button>
+
+                    <h4 style="margin:24px 0 10px;">Your Submissions</h4>
+                    <div id="pm-giftcard-list" style="display:flex; flex-direction:column; gap:8px;">
+                        <p style="color:var(--text-muted); font-size:0.85rem;">Loading…</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MAIN ROOT APPS ENGINE -->
     <main>
 
@@ -2764,85 +2860,6 @@
                             <li><i class="fa-solid fa-check"></i> Dedicated support</li>
                         </ul>
                         <button class="btn btn-primary" style="width:100%" onclick="selectPremiumPlan('platinum')" id="premium-btn-platinum">Upgrade Account</button>
-                    </div>
-                </div>
-
-                <!-- --- PAYMENT METHOD PICKER: appears once a plan above is tapped --- -->
-                <div class="payment-methods-panel" id="paymentMethodsPanel" style="max-width:640px; margin:40px auto 0; display:none;">
-                    <h3 style="margin-bottom:4px;">Choose How to Pay</h3>
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;" id="pm-selected-plan-label">Pick a payment method for your plan.</p>
-
-                    <div class="form-group">
-                        <label class="form-label">Plan</label>
-                        <div style="display:flex; gap:16px; flex-wrap:wrap;">
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="radio" name="pm-tier" value="plus" checked onchange="onPaymentTierChange()"> Spark — $5/mo
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="radio" name="pm-tier" value="gold" onchange="onPaymentTierChange()"> Gold — $12/mo
-                            </label>
-                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $29.99/mo
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="settings-nav" style="margin-top:20px;">
-                        <button class="settings-nav-btn active-settings-tab" id="pm-tab-btn-card" onclick="switchPaymentTab(event, 'pm-pane-card')"><i class="fa-solid fa-credit-card"></i> Card</button>
-                        <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> USSD (Paystack)</button>
-                        <button class="settings-nav-btn" id="pm-tab-btn-paypal" onclick="switchPaymentTab(event, 'pm-pane-paypal')"><i class="fa-brands fa-paypal"></i> PayPal</button>
-                        <button class="settings-nav-btn" id="pm-tab-btn-giftcard" onclick="switchPaymentTab(event, 'pm-pane-giftcard')"><i class="fa-solid fa-gift"></i> Gift Card</button>
-                    </div>
-
-                    <div class="settings-content-panel">
-                        <!-- Card / Stripe -->
-                        <div class="settings-pane active-pane" id="pm-pane-card">
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Pay securely by card through Stripe. You'll be redirected to complete checkout.</p>
-                            <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout(getSelectedPaymentTier())" id="pm-card-btn">Pay with Card</button>
-                        </div>
-
-                        <!-- USSD / Paystack -->
-                        <div class="settings-pane" id="pm-pane-ussd">
-                            <div id="pm-ussd-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
-                            <div id="pm-ussd-form">
-                                <div class="form-group">
-                                    <label class="form-label">Choose Your Bank</label>
-                                    <select class="form-control" id="pm-ussd-bank"></select>
-                                </div>
-                                <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Get USSD Code</button>
-                                <div id="pm-ussd-result" style="display:none; margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:10px; text-align:center;">
-                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Dial this code on the phone linked to your bank account:</p>
-                                    <div id="pm-ussd-code" style="font-size:1.4rem; font-weight:700; letter-spacing:1px;"></div>
-                                    <p id="pm-ussd-status" style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Waiting for payment confirmation…</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- PayPal (coming soon) -->
-                        <div class="settings-pane" id="pm-pane-paypal">
-                            <div style="text-align:center; padding:24px 12px; border:1px dashed var(--border); border-radius:10px;">
-                                <i class="fa-brands fa-paypal" style="font-size:2rem; color:var(--text-muted);"></i>
-                                <p style="margin-top:10px; font-weight:600;">PayPal Checkout</p>
-                                <span class="admin-badge off" style="display:inline-block; margin-top:6px;">Coming Soon</span>
-                                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;">We're working on adding PayPal support. In the meantime, please use Card, USSD, or Gift Card.</p>
-                                <button class="btn btn-secondary" style="width:100%; margin-top:12px;" disabled>PayPal — Coming Soon</button>
-                            </div>
-                        </div>
-
-                        <!-- Gift Card -->
-                        <div class="settings-pane" id="pm-pane-giftcard">
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Enter your gift card ID/code below. Our team manually verifies each submission and unlocks Premium once approved — this usually just takes a moment to review.</p>
-                            <div class="form-group">
-                                <label class="form-label">Gift Card ID / Code</label>
-                                <input type="text" class="form-control" id="pm-giftcard-code" placeholder="e.g. HS-GIFT-XXXX-XXXX" maxlength="100">
-                            </div>
-                            <button class="btn btn-primary" style="width:100%" onclick="submitGiftcard()" id="pm-giftcard-btn">Submit Gift Card</button>
-
-                            <h4 style="margin:24px 0 10px;">Your Submissions</h4>
-                            <div id="pm-giftcard-list" style="display:flex; flex-direction:column; gap:8px;">
-                                <p style="color:var(--text-muted); font-size:0.85rem;">Loading…</p>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </div>
@@ -3995,16 +4012,17 @@
             const label = document.getElementById('pm-selected-plan-label');
             if (label) label.innerText = `Choose how you'd like to pay for ${PREMIUM_TIER_LABELS[tier] || 'your plan'}.`;
 
-            const panel = document.getElementById('paymentMethodsPanel');
-            panel.style.display = 'block';
-
             // Default back to the Card tab whenever a fresh plan is picked.
-            document.querySelectorAll('.payment-methods-panel .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
-            document.querySelectorAll('.payment-methods-panel .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
+            document.querySelectorAll('#premiumModalOverlay .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
+            document.querySelectorAll('#premiumModalOverlay .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
             document.getElementById('pm-tab-btn-card').classList.add('active-settings-tab');
             document.getElementById('pm-pane-card').classList.add('active-pane');
 
-            panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('premiumModalOverlay').style.display = 'flex';
+        }
+
+        function closePremiumModal() {
+            document.getElementById('premiumModalOverlay').style.display = 'none';
         }
 
         async function startPremiumCheckout(tier) {
@@ -4039,8 +4057,8 @@
         }
 
         function switchPaymentTab(event, paneId) {
-            document.querySelectorAll('.payment-methods-panel .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
-            document.querySelectorAll('.payment-methods-panel .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
+            document.querySelectorAll('#premiumModalOverlay .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
+            document.querySelectorAll('#premiumModalOverlay .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
             event.currentTarget.classList.add('active-settings-tab');
             document.getElementById(paneId).classList.add('active-pane');
         }
@@ -4070,16 +4088,16 @@
             await loadMyGiftcards();
         }
 
-        /* ---- USSD via Paystack ---- */
+        /* ---- Mobile Money via Paystack (Ghana, GHS only) ---- */
         async function loadPaystackBanks() {
             const select = document.getElementById('pm-ussd-bank');
             const disabledMsg = document.getElementById('pm-ussd-disabled-msg');
             const form = document.getElementById('pm-ussd-form');
             try {
                 const data = await apiFetch('/api/premium/paystack/banks');
-                select.innerHTML = data.banks.map(b => `<option value="${b.code}">${escapeHtml(b.name)}</option>`).join('');
+                select.innerHTML = data.providers.map(p => `<option value="${p.code}">${escapeHtml(p.name)}</option>`).join('');
                 if (!data.enabled) {
-                    disabledMsg.innerText = "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
+                    disabledMsg.innerText = "Mobile Money payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
                     disabledMsg.style.display = "block";
                     form.style.display = "none";
                 } else {
@@ -4087,7 +4105,7 @@
                     form.style.display = "block";
                 }
             } catch (err) {
-                disabledMsg.innerText = "Couldn't load USSD payment options right now.";
+                disabledMsg.innerText = "Couldn't load Mobile Money payment options right now.";
                 disabledMsg.style.display = "block";
                 form.style.display = "none";
             }
@@ -4095,22 +4113,27 @@
 
         async function startUssdPayment() {
             const btn = document.getElementById('pm-ussd-btn');
-            const bankCode = document.getElementById('pm-ussd-bank').value;
+            const provider = document.getElementById('pm-ussd-bank').value;
+            const phone = document.getElementById('pm-ussd-phone').value.trim();
             const tier = getSelectedPaymentTier();
+            if (!phone) {
+                showToast("Phone Number Required", "Enter the mobile money number to pay from.", "fa-triangle-exclamation");
+                return;
+            }
             btn.disabled = true;
             const originalText = btn.innerText;
-            btn.innerText = "Requesting Code...";
+            btn.innerText = "Requesting Payment...";
             try {
                 const data = await apiFetch('/api/premium/paystack/ussd/initiate', {
                     method: 'POST',
-                    body: JSON.stringify({ tier, bankCode })
+                    body: JSON.stringify({ tier, provider, phone })
                 });
                 document.getElementById('pm-ussd-code').innerText = data.ussdCode || "Check your phone";
                 document.getElementById('pm-ussd-status').innerText = data.displayText || "Waiting for payment confirmation…";
                 document.getElementById('pm-ussd-result').style.display = "block";
                 pollPaystackVerification(data.reference, tier);
             } catch (err) {
-                showToast("USSD Payment Unavailable", err.message, "fa-triangle-exclamation");
+                showToast("Mobile Money Payment Unavailable", err.message, "fa-triangle-exclamation");
             } finally {
                 btn.disabled = false;
                 btn.innerText = originalText;

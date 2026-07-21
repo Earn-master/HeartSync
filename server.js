@@ -36,15 +36,17 @@ if (process.env.STRIPE_SECRET_KEY) {
 }
 
 // ---------- Paystack (optional - only activates if PAYSTACK_SECRET_KEY is set) ----------
-// Used specifically for USSD payments (Nigeria). Node 18+ has global fetch built in.
+// Ghana only — charges are always in GHS via Mobile Money. Node 18+ has global fetch built in.
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || null;
-const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY || 'NGN';
+const PAYSTACK_CURRENCY = 'GHS';
+// Plan prices are fixed in GHS (amounts below are in pesewas — GHS x 100 — the
+// smallest unit Paystack expects, same as kobo for NGN or cents for USD).
 const PAYSTACK_AMOUNTS = {
-    plus: process.env.PAYSTACK_AMOUNT_PLUS ? parseInt(process.env.PAYSTACK_AMOUNT_PLUS, 10) : null,
-    gold: process.env.PAYSTACK_AMOUNT_GOLD ? parseInt(process.env.PAYSTACK_AMOUNT_GOLD, 10) : null,
-    platinum: process.env.PAYSTACK_AMOUNT_PLATINUM ? parseInt(process.env.PAYSTACK_AMOUNT_PLATINUM, 10) : null
+    plus: 6000,      // GHS 60
+    gold: 14400,     // GHS 144
+    platinum: 35988  // GHS 359.88
 };
-const PAYSTACK_USSD_BANKS = { '737': 'GTBank', '919': 'UBA', '822': 'Sterling Bank', '966': 'Polaris Bank' };
+const PAYSTACK_MOBILE_MONEY_PROVIDERS = { mtn: 'MTN Mobile Money', vod: 'Telecel Cash', atl: 'AirtelTigo Money' };
 
 async function paystackRequest(endpoint, method, body) {
     const res = await fetch(`https://api.paystack.co${endpoint}`, {
@@ -578,55 +580,56 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 });
 
 // =====================================================================
-// PAYSTACK USSD CHECKOUT (Nigeria) — opt-in via PAYSTACK_SECRET_KEY
+// PAYSTACK MOBILE MONEY CHECKOUT (Ghana, GHS only) — opt-in via PAYSTACK_SECRET_KEY
 // =====================================================================
 app.get('/api/premium/paystack/banks', (req, res) => {
     res.json({
         enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
         currency: PAYSTACK_CURRENCY,
-        banks: Object.entries(PAYSTACK_USSD_BANKS).map(([code, name]) => ({ code, name }))
+        providers: Object.entries(PAYSTACK_MOBILE_MONEY_PROVIDERS).map(([code, name]) => ({ code, name }))
     });
 });
 
 app.post('/api/premium/paystack/ussd/initiate', authRequired, async (req, res) => {
     if (!PAYSTACK_SECRET_KEY) {
-        return res.status(501).json({ error: 'USSD payments are not configured on this deployment yet. Set PAYSTACK_SECRET_KEY, PAYSTACK_AMOUNT_GOLD and PAYSTACK_AMOUNT_PLATINUM in your environment to enable it.' });
+        return res.status(501).json({ error: 'Mobile Money payments are not configured on this deployment yet. Set PAYSTACK_SECRET_KEY in your environment to enable it.' });
     }
     try {
-        const { tier, bankCode } = req.body; // 'plus' | 'gold' | 'platinum', '737' | '919' | '822' | '966'
+        const { tier, provider, phone } = req.body; // 'plus' | 'gold' | 'platinum', 'mtn' | 'vod' | 'atl'
         if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
-        if (!PAYSTACK_USSD_BANKS[bankCode]) return res.status(400).json({ error: 'Choose a valid bank for USSD payment.' });
+        if (!PAYSTACK_MOBILE_MONEY_PROVIDERS[provider]) return res.status(400).json({ error: 'Choose a valid mobile money provider.' });
+        if (!phone || !/^[0-9+ ]{9,15}$/.test(phone.trim())) return res.status(400).json({ error: 'Enter a valid mobile money phone number.' });
         const amount = PAYSTACK_AMOUNTS[tier];
-        if (!amount) return res.status(400).json({ error: 'That plan is not configured for USSD payment.' });
+        if (!amount) return res.status(400).json({ error: 'That plan is not configured for Mobile Money payment.' });
 
         const reference = `hsync_${req.user.id}_${Date.now()}`;
-        const { ok, data } = await paystackRequest('/transaction/charge', 'POST', {
+        const { ok, data } = await paystackRequest('/charge', 'POST', {
             reference,
             amount,
             email: req.user.email,
             currency: PAYSTACK_CURRENCY,
-            ussd: { type: bankCode },
+            mobile_money: { phone: phone.trim(), provider },
             metadata: { userId: String(req.user.id), tier }
         });
         if (!ok || !data.status) {
-            return res.status(400).json({ error: (data && data.message) || 'Could not start the USSD charge.' });
+            return res.status(400).json({ error: (data && data.message) || 'Could not start the Mobile Money charge.' });
         }
 
         await pool.query(
             `INSERT INTO paystack_transactions (user_id, reference, tier, amount, currency, ussd_type, status)
              VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
-            [req.user.id, reference, tier, amount, PAYSTACK_CURRENCY, bankCode]
+            [req.user.id, reference, tier, amount, PAYSTACK_CURRENCY, provider]
         );
 
         res.json({
             reference,
-            ussdCode: data.data.ussd_code || null,
-            displayText: data.data.display_text || `Dial the USSD code shown to complete your ${PAYSTACK_USSD_BANKS[bankCode]} payment.`,
+            ussdCode: null,
+            displayText: data.data.display_text || `Approve the ${PAYSTACK_MOBILE_MONEY_PROVIDERS[provider]} prompt sent to your phone to complete payment.`,
             status: data.data.status || 'pay_offline'
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Could not start USSD checkout.' });
+        res.status(500).json({ error: 'Could not start Mobile Money checkout.' });
     }
 });
 
