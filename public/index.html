@@ -59,6 +59,11 @@
             padding: 0;
         }
 
+        html {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
@@ -475,15 +480,15 @@
 
         .hero-img-stack {
             position: relative;
-            width: 380px;
-            height: 450px;
+            width: min(380px, 88vw);
+            height: min(450px, 104vw);
             z-index: 1;
         }
 
         .hero-heart-bubbles {
             position: absolute;
-            width: 460px;
-            height: 560px;
+            width: min(460px, 96vw);
+            height: min(560px, 116vw);
             left: 50%;
             top: 50%;
             transform: translate(-50%, -50%);
@@ -2113,29 +2118,9 @@
             cursor: pointer;
         }
         .main-content-panel { padding: 20px 16px; }
-
-        /* --- Phone-frame presentation on wider screens (app views only) ---
-               The homepage (.is-home-view) is a full-width marketing page and
-               is intentionally excluded from the phone frame so its wide
-               sections (hero, gallery, footer, etc.) aren't clipped/squeezed
-               into a 480px column and hidden off the right edge. --- */
-        @media (min-width: 481px) {
-            html { background-color: #dfe3e8; }
-            [data-theme="dark"] { background-color: #05060a; }
-            body:not(.is-home-view) { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.25); min-height: 100vh; }
-            body.is-home-view { max-width: 100%; box-shadow: none; }
-            body:not(.is-home-view) .navbar,
-            body:not(.is-home-view) .mobile-nav {
-                left: 50%;
-                right: auto;
-                width: 100%;
-                max-width: 480px;
-                transform: translateX(-50%);
-            }
-        }
     </style>
 </head>
-<body data-theme="light" class="is-home-view">
+<body data-theme="light">
     <!-- Shown until we know whether to render the homepage or the dashboard, so a
          returning logged-in visitor never sees the logged-out landing page flash on refresh. -->
     <div id="appBootLoader"><div class="boot-spinner"></div></div>
@@ -2241,7 +2226,7 @@
 
             <div class="settings-nav pm-payment-nav" style="margin-top:20px;">
                 <button class="settings-nav-btn active-settings-tab" id="pm-tab-btn-card" onclick="switchPaymentTab(event, 'pm-pane-card')"><i class="fa-solid fa-credit-card"></i> Card</button>
-                <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> USSD</button>
+                <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> Paystack</button>
                 <button class="settings-nav-btn" id="pm-tab-btn-paypal" onclick="switchPaymentTab(event, 'pm-pane-paypal')"><i class="fa-brands fa-paypal"></i> PayPal</button>
                 <button class="settings-nav-btn" id="pm-tab-btn-giftcard" onclick="switchPaymentTab(event, 'pm-pane-giftcard')"><i class="fa-solid fa-gift"></i> Gift Card</button>
             </div>
@@ -2256,23 +2241,14 @@
                     </div>
                 </div>
 
-                <!-- USSD / Paystack (Ghana, GHS only) -->
+                <!-- Paystack Popup (Card, Mobile Money, Bank — whatever channels are enabled on the Paystack account) -->
                 <div class="settings-pane" id="pm-pane-ussd">
                     <div id="pm-ussd-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
                     <div id="pm-ussd-form">
-                        <div class="form-group">
-                            <label class="form-label">USSD Provider</label>
-                            <select class="form-control" id="pm-ussd-bank"></select>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label">Phone Number</label>
-                            <input type="tel" class="form-control" id="pm-ussd-phone" placeholder="e.g. 0551234567">
-                        </div>
-                        <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Pay with USSD</button>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Pay with Paystack. A secure Paystack window will open for you to enter your card or Mobile Money details.</p>
+                        <button class="btn btn-primary" style="width:100%" onclick="startPaystackPopup()" id="pm-ussd-btn">Pay with Paystack</button>
                         <div id="pm-ussd-result" style="display:none; margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:10px; text-align:center;">
-                            <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Approve the prompt sent to your phone to complete payment:</p>
-                            <div id="pm-ussd-code" style="font-size:1.4rem; font-weight:700; letter-spacing:1px;"></div>
-                            <p id="pm-ussd-status" style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Waiting for payment confirmation…</p>
+                            <p id="pm-ussd-status" style="font-size:0.85rem; color:var(--text-muted);">Waiting for payment confirmation…</p>
                         </div>
                     </div>
                 </div>
@@ -3155,7 +3131,6 @@
             }
 
             state.currentView = viewId;
-            document.body.classList.toggle('is-home-view', viewId === 'home');
             document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active-view'));
             const targetView = document.getElementById(`view-${viewId}`);
             if (targetView) targetView.classList.add('active-view');
@@ -4080,9 +4055,8 @@
         }
 
         function resetPaymentMethodState() {
-            // Reset any in-progress USSD flow when a new plan is opened.
+            // Reset any in-progress Paystack flow when a new plan is opened.
             document.getElementById('pm-ussd-result').style.display = "none";
-            document.getElementById('pm-ussd-code').innerText = "";
             if (pmPaystackPollTimer) { clearInterval(pmPaystackPollTimer); pmPaystackPollTimer = null; }
         }
 
@@ -4127,7 +4101,7 @@
             try {
                 const methods = await apiFetch('/api/premium/methods');
                 if (!methods.card) {
-                    cardMsg.innerText = "Card payments aren't enabled on this deployment yet. Please check back soon, or use USSD or Gift Card for now.";
+                    cardMsg.innerText = "Card payments aren't enabled on this deployment yet. Please check back soon, or use Paystack or Gift Card for now.";
                     cardMsg.style.display = "block";
                     cardForm.style.display = "none";
                 } else {
@@ -4142,16 +4116,33 @@
             }
         }
 
-        /* ---- USSD via Paystack (Ghana, GHS only) ---- */
+        /* ---- Paystack Popup ----
+           Opens Paystack's own hosted mini prompt (their inline.js widget) so
+           the user enters card/mobile money details on Paystack's side, not
+           ours. Needs both keys: PAYSTACK_SECRET_KEY (server-side, to create/
+           verify the transaction) and PAYSTACK_PUBLIC_KEY (client-side, to
+           open the popup itself). */
+        let paystackScriptPromise = null;
+        function loadPaystackScript() {
+            if (window.PaystackPop) return Promise.resolve();
+            if (paystackScriptPromise) return paystackScriptPromise;
+            paystackScriptPromise = new Promise((resolve, reject) => {
+                const s = document.createElement('script');
+                s.src = 'https://js.paystack.co/v1/inline.js';
+                s.onload = resolve;
+                s.onerror = () => { paystackScriptPromise = null; reject(new Error('Could not load the Paystack payment window.')); };
+                document.head.appendChild(s);
+            });
+            return paystackScriptPromise;
+        }
+
         async function loadPaystackBanks() {
-            const select = document.getElementById('pm-ussd-bank');
             const disabledMsg = document.getElementById('pm-ussd-disabled-msg');
             const form = document.getElementById('pm-ussd-form');
             try {
-                const data = await apiFetch('/api/premium/paystack/banks');
-                select.innerHTML = data.providers.map(p => `<option value="${p.code}">${escapeHtml(p.name)}</option>`).join('');
+                const data = await apiFetch('/api/premium/paystack/config');
                 if (!data.enabled) {
-                    disabledMsg.innerText = "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
+                    disabledMsg.innerText = "Paystack payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
                     disabledMsg.style.display = "block";
                     form.style.display = "none";
                 } else {
@@ -4159,38 +4150,71 @@
                     form.style.display = "block";
                 }
             } catch (err) {
-                disabledMsg.innerText = "Couldn't load USSD payment options right now.";
+                disabledMsg.innerText = "Couldn't load Paystack payment options right now.";
                 disabledMsg.style.display = "block";
                 form.style.display = "none";
             }
         }
 
-        async function startUssdPayment() {
+        async function startPaystackPopup() {
             const btn = document.getElementById('pm-ussd-btn');
-            const provider = document.getElementById('pm-ussd-bank').value;
-            const phone = document.getElementById('pm-ussd-phone').value.trim();
             const tier = getSelectedPaymentTier();
-            if (!phone) {
-                showToast("Phone Number Required", "Enter the phone number to pay from.", "fa-triangle-exclamation");
-                return;
-            }
             btn.disabled = true;
             const originalText = btn.innerText;
-            btn.innerText = "Requesting Payment...";
+            btn.innerText = "Loading Paystack...";
             try {
-                const data = await apiFetch('/api/premium/paystack/ussd/initiate', {
+                const init = await apiFetch('/api/premium/paystack/init', {
                     method: 'POST',
-                    body: JSON.stringify({ tier, provider, phone })
+                    body: JSON.stringify({ tier })
                 });
-                document.getElementById('pm-ussd-code').innerText = data.ussdCode || "Check your phone";
-                document.getElementById('pm-ussd-status').innerText = data.displayText || "Waiting for payment confirmation…";
-                document.getElementById('pm-ussd-result').style.display = "block";
-                pollPaystackVerification(data.reference, tier);
+                await loadPaystackScript();
+
+                const handler = PaystackPop.setup({
+                    key: init.publicKey,
+                    email: init.email,
+                    amount: init.amount,
+                    currency: init.currency,
+                    ref: init.reference,
+                    metadata: { tier },
+                    callback: function (response) {
+                        verifyPaystackPayment(response.reference, tier);
+                    },
+                    onClose: function () {
+                        btn.disabled = false;
+                        btn.innerText = originalText;
+                    }
+                });
+                handler.openIframe();
             } catch (err) {
-                showToast("USSD Payment Unavailable", err.message, "fa-triangle-exclamation");
+                showToast("Paystack Unavailable", err.message, "fa-triangle-exclamation");
             } finally {
                 btn.disabled = false;
                 btn.innerText = originalText;
+            }
+        }
+
+        async function verifyPaystackPayment(reference, tier) {
+            const resultBox = document.getElementById('pm-ussd-result');
+            const statusEl = document.getElementById('pm-ussd-status');
+            resultBox.style.display = "block";
+            statusEl.innerText = "Confirming your payment…";
+            try {
+                const data = await apiFetch(`/api/premium/paystack/verify/${encodeURIComponent(reference)}`);
+                if (data.status === 'success') {
+                    statusEl.innerText = "Payment confirmed! Your account is now Premium.";
+                    if (state.user) { state.user.isPremium = true; state.user.premiumTier = tier; }
+                    renderPlanBadge();
+                    updatePremiumPlanButtons();
+                    showToast("Payment Successful", "Your Premium plan is now active.", "fa-circle-check");
+                } else if (data.status === 'failed') {
+                    statusEl.innerText = "That payment failed or was cancelled. You can try again.";
+                } else {
+                    statusEl.innerText = "Still confirming with Paystack — this can take a few seconds. You'll see it unlock automatically.";
+                    pollPaystackVerification(reference, tier);
+                }
+            } catch (err) {
+                statusEl.innerText = "Couldn't confirm the payment yet. We'll keep checking.";
+                pollPaystackVerification(reference, tier);
             }
         }
 

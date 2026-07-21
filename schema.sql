@@ -114,7 +114,7 @@ CREATE TABLE IF NOT EXISTS admins (
 -- PAYMENTS
 -- =====================================================================
 
--- Paystack USSD charge attempts, so we can verify/poll and reconcile them.
+-- Paystack Popup payment attempts, so we can verify/poll and reconcile them.
 CREATE TABLE IF NOT EXISTS paystack_transactions (
     id           SERIAL PRIMARY KEY,
     user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

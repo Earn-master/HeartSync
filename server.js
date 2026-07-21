@@ -38,6 +38,9 @@ if (process.env.STRIPE_SECRET_KEY) {
 // ---------- Paystack (optional - only activates if PAYSTACK_SECRET_KEY is set) ----------
 // Ghana only — charges are always in GHS via Mobile Money. Node 18+ has global fetch built in.
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || null;
+// Public key is safe to expose to the browser — it's what initializes the
+// Paystack Popup (the "mini prompt" the user fills their payment details into).
+const PAYSTACK_PUBLIC_KEY = process.env.PAYSTACK_PUBLIC_KEY || null;
 const PAYSTACK_CURRENCY = 'GHS';
 // Plan prices are fixed in GHS (amounts below are in pesewas — GHS x 100 — the
 // smallest unit Paystack expects, same as kobo for NGN or cents for USD).
@@ -46,7 +49,7 @@ const PAYSTACK_AMOUNTS = {
     gold: 14400,     // GHS 144
     platinum: 35988  // GHS 359.88
 };
-const PAYSTACK_MOBILE_MONEY_PROVIDERS = { mtn: 'MTN Mobile Money', vod: 'Telecel Cash', atl: 'AirtelTigo Money' };
+
 
 async function paystackRequest(endpoint, method, body) {
     const res = await fetch(`https://api.paystack.co${endpoint}`, {
@@ -588,65 +591,57 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 app.get('/api/premium/methods', (req, res) => {
     res.json({
         card: !!stripe,
-        ussd: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum)
+        paystack: !!(PAYSTACK_SECRET_KEY && PAYSTACK_PUBLIC_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum)
     });
 });
 
-app.get('/api/premium/paystack/banks', (req, res) => {
+// Tells the frontend whether Paystack is enabled and hands it the public key
+// needed to open the Paystack Popup (their own hosted "mini prompt" where the
+// user enters card / mobile money details — nothing is collected on our end).
+app.get('/api/premium/paystack/config', (req, res) => {
     res.json({
-        enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
-        currency: PAYSTACK_CURRENCY,
-        providers: Object.entries(PAYSTACK_MOBILE_MONEY_PROVIDERS).map(([code, name]) => ({ code, name }))
+        enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_PUBLIC_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
+        publicKey: PAYSTACK_PUBLIC_KEY,
+        currency: PAYSTACK_CURRENCY
     });
 });
 
-app.post('/api/premium/paystack/ussd/initiate', authRequired, async (req, res) => {
-    if (!PAYSTACK_SECRET_KEY) {
-        return res.status(501).json({ error: "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now." });
+// Creates a pending transaction record and hands back everything the
+// frontend needs to open the Paystack Popup for it.
+app.post('/api/premium/paystack/init', authRequired, async (req, res) => {
+    if (!PAYSTACK_SECRET_KEY || !PAYSTACK_PUBLIC_KEY) {
+        return res.status(501).json({ error: "Paystack payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now." });
     }
     try {
-        const { tier, provider, phone } = req.body; // 'plus' | 'gold' | 'platinum', 'mtn' | 'vod' | 'atl'
+        const { tier } = req.body; // 'plus' | 'gold' | 'platinum'
         if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
-        if (!PAYSTACK_MOBILE_MONEY_PROVIDERS[provider]) return res.status(400).json({ error: 'Choose a valid mobile money provider.' });
-        if (!phone || !/^[0-9+ ]{9,15}$/.test(phone.trim())) return res.status(400).json({ error: 'Enter a valid mobile money phone number.' });
         const amount = PAYSTACK_AMOUNTS[tier];
-        if (!amount) return res.status(400).json({ error: 'That plan is not configured for Mobile Money payment.' });
+        if (!amount) return res.status(400).json({ error: 'That plan is not configured for Paystack payment.' });
 
         const reference = `hsync_${req.user.id}_${Date.now()}`;
-        const { ok, data } = await paystackRequest('/charge', 'POST', {
-            reference,
-            amount,
-            email: req.user.email,
-            currency: PAYSTACK_CURRENCY,
-            mobile_money: { phone: phone.trim(), provider },
-            metadata: { userId: String(req.user.id), tier }
-        });
-        if (!ok || !data.status) {
-            return res.status(400).json({ error: (data && data.message) || 'Could not start the Mobile Money charge.' });
-        }
-
         await pool.query(
-            `INSERT INTO paystack_transactions (user_id, reference, tier, amount, currency, ussd_type, status)
-             VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
-            [req.user.id, reference, tier, amount, PAYSTACK_CURRENCY, provider]
+            `INSERT INTO paystack_transactions (user_id, reference, tier, amount, currency, status)
+             VALUES ($1, $2, $3, $4, $5, 'pending')`,
+            [req.user.id, reference, tier, amount, PAYSTACK_CURRENCY]
         );
 
         res.json({
             reference,
-            ussdCode: null,
-            displayText: data.data.display_text || `Approve the ${PAYSTACK_MOBILE_MONEY_PROVIDERS[provider]} prompt sent to your phone to complete payment.`,
-            status: data.data.status || 'pay_offline'
+            amount,
+            currency: PAYSTACK_CURRENCY,
+            email: req.user.email,
+            publicKey: PAYSTACK_PUBLIC_KEY
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Could not start Mobile Money checkout.' });
+        res.status(500).json({ error: 'Could not start Paystack checkout.' });
     }
 });
 
 // The frontend polls this after showing the USSD code, so the user sees
 // their Premium unlock the moment they finish paying on their phone.
 app.get('/api/premium/paystack/verify/:reference', authRequired, async (req, res) => {
-    if (!PAYSTACK_SECRET_KEY) return res.status(501).json({ error: 'USSD payments are not configured on this deployment.' });
+    if (!PAYSTACK_SECRET_KEY) return res.status(501).json({ error: 'Paystack payments are not configured on this deployment.' });
     try {
         const txResult = await pool.query('SELECT * FROM paystack_transactions WHERE reference = $1 AND user_id = $2', [req.params.reference, req.user.id]);
         const tx = txResult.rows[0];
