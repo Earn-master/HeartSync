@@ -505,6 +505,15 @@ app.get('/api/site-settings', async (req, res) => {
             heroSubtitle: row.hero_subtitle || null,
             heroImage1: row.hero_image_1 || null,
             heroImage2: row.hero_image_2 || null,
+            heroImage3: row.hero_image_3 || null,
+            heroImage4: row.hero_image_4 || null,
+            heroImage5: row.hero_image_5 || null,
+            heroImage6: row.hero_image_6 || null,
+            heroImage7: row.hero_image_7 || null,
+            heroImage8: row.hero_image_8 || null,
+            heroImage9: row.hero_image_9 || null,
+            heroImage10: row.hero_image_10 || null,
+            heroImageAccent: row.hero_image_accent || null,
             galleryImage1: row.gallery_image_1 || null,
             galleryImage2: row.gallery_image_2 || null,
             galleryImage3: row.gallery_image_3 || null,
@@ -1119,12 +1128,25 @@ app.put('/api/admin/site-settings', adminAuth, async (req, res) => {
             heroSubtitle: 'hero_subtitle',
             heroImage1: 'hero_image_1',
             heroImage2: 'hero_image_2',
+            heroImage3: 'hero_image_3',
+            heroImage4: 'hero_image_4',
+            heroImage5: 'hero_image_5',
+            heroImage6: 'hero_image_6',
+            heroImage7: 'hero_image_7',
+            heroImage8: 'hero_image_8',
+            heroImage9: 'hero_image_9',
+            heroImage10: 'hero_image_10',
+            heroImageAccent: 'hero_image_accent',
             galleryImage1: 'gallery_image_1',
             galleryImage2: 'gallery_image_2',
             galleryImage3: 'gallery_image_3',
             safetyImage: 'safety_image'
         };
-        const imageKeys = ['heroImage1', 'heroImage2', 'galleryImage1', 'galleryImage2', 'galleryImage3', 'safetyImage'];
+        const imageKeys = [
+            'heroImage1', 'heroImage2', 'heroImage3', 'heroImage4', 'heroImage5',
+            'heroImage6', 'heroImage7', 'heroImage8', 'heroImage9', 'heroImage10',
+            'heroImageAccent', 'galleryImage1', 'galleryImage2', 'galleryImage3', 'safetyImage'
+        ];
         const sets = [];
         const values = [];
         let i = 1;

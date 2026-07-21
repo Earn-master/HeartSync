@@ -70,6 +70,15 @@ CREATE TABLE IF NOT EXISTS site_settings (
     hero_subtitle       TEXT,
     hero_image_1        TEXT,
     hero_image_2        TEXT,
+    hero_image_3        TEXT,
+    hero_image_4        TEXT,
+    hero_image_5        TEXT,
+    hero_image_6        TEXT,
+    hero_image_7        TEXT,
+    hero_image_8        TEXT,
+    hero_image_9        TEXT,
+    hero_image_10       TEXT,
+    hero_image_accent   TEXT,
     gallery_image_1     TEXT,
     gallery_image_2     TEXT,
     gallery_image_3     TEXT,
@@ -77,6 +86,16 @@ CREATE TABLE IF NOT EXISTS site_settings (
     updated_at          TIMESTAMPTZ DEFAULT NOW(),
     CONSTRAINT single_row CHECK (id = 1)
 );
+-- Safe to re-run: adds the carousel columns to any pre-existing site_settings table.
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_3 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_4 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_5 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_6 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_7 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_8 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_9 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_10 TEXT;
+ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS hero_image_accent TEXT;
 INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
 
 -- =====================================================================

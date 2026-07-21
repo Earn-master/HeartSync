@@ -520,11 +520,21 @@
         }
 
         .hero-card-1 {
-            transform: rotate(-8px) translate(-40px, 20px);
+            width: 280px;
+            height: 360px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 1;
         }
         .hero-card-2 {
-            transform: rotate(4px) translate(40px, -10px);
+            width: 140px;
+            height: 180px;
+            top: auto;
+            left: auto;
+            bottom: 0;
+            right: -10px;
+            transform: rotate(6deg);
             z-index: 2;
         }
 
@@ -2042,6 +2052,16 @@
             color: #fff;
             border-color: var(--primary);
         }
+        .settings-nav-select-wrap {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg-body);
+        }
+        .settings-nav-select {
+            width: 100%;
+            font-weight: 600;
+            cursor: pointer;
+        }
         .main-content-panel { padding: 20px 16px; }
 
         /* --- Phone-frame presentation on wider screens --- */
@@ -2171,20 +2191,20 @@
                     <div class="hero-img-stack">
                         <div class="hero-card hero-card-1">
                             <div class="hero-carousel" id="hero-carousel">
-                                <img id="site-img-hero1" class="carousel-slide active" src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1027/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1005/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1011/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1012/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1025/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1035/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1040/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1041/400/600" alt="Dating Profile Match">
-                                <img class="carousel-slide" src="https://picsum.photos/id/1043/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero1" class="carousel-slide active" src="https://picsum.photos/seed/hs1/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero2" class="carousel-slide" src="https://picsum.photos/seed/hs2/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero3" class="carousel-slide" src="https://picsum.photos/seed/hs3/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero4" class="carousel-slide" src="https://picsum.photos/seed/hs4/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero5" class="carousel-slide" src="https://picsum.photos/seed/hs5/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero6" class="carousel-slide" src="https://picsum.photos/seed/hs6/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero7" class="carousel-slide" src="https://picsum.photos/seed/hs7/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero8" class="carousel-slide" src="https://picsum.photos/seed/hs8/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero9" class="carousel-slide" src="https://picsum.photos/seed/hs9/400/600" alt="Dating Profile Match">
+                                <img id="site-img-hero10" class="carousel-slide" src="https://picsum.photos/seed/hs10/400/600" alt="Dating Profile Match">
                             </div>
                         </div>
                         <div class="hero-card hero-card-2">
-                            <img id="site-img-hero2" src="https://picsum.photos/id/91/400/600" alt="Happy Couple Interaction">
+                            <img id="site-img-hero-accent" src="https://picsum.photos/seed/hsaccent/400/600" alt="Happy Couple Interaction">
                         </div>
                     </div>
                 </div>
@@ -2818,10 +2838,12 @@
         <section id="view-settings" class="app-view">
             <div class="main-content-panel" style="width:100%;">
                 <div class="settings-container">
-                    <div class="settings-nav">
-                        <button class="settings-nav-btn active-settings-tab" onclick="switchSettingsTab(event, 's-account')"><i class="fa-solid fa-user"></i> Account Profile</button>
-                        <button class="settings-nav-btn" onclick="switchSettingsTab(event, 's-notifications')"><i class="fa-solid fa-bell"></i> Notifications</button>
-                        <button class="settings-nav-btn" onclick="switchSettingsTab(event, 's-privacy')"><i class="fa-solid fa-lock"></i> Privacy Settings</button>
+                    <div class="settings-nav-select-wrap">
+                        <select class="form-control settings-nav-select" id="settingsTabSelect" onchange="switchSettingsTab(this.value)">
+                            <option value="s-account">Account Profile</option>
+                            <option value="s-notifications">Notifications</option>
+                            <option value="s-privacy">Privacy Settings</option>
+                        </select>
                     </div>
                     <div class="settings-content-panel">
                         <!-- Pane 1: Profile -->
@@ -3030,6 +3052,15 @@
             const imageMap = {
                 heroImage1: 'site-img-hero1',
                 heroImage2: 'site-img-hero2',
+                heroImage3: 'site-img-hero3',
+                heroImage4: 'site-img-hero4',
+                heroImage5: 'site-img-hero5',
+                heroImage6: 'site-img-hero6',
+                heroImage7: 'site-img-hero7',
+                heroImage8: 'site-img-hero8',
+                heroImage9: 'site-img-hero9',
+                heroImage10: 'site-img-hero10',
+                heroImageAccent: 'site-img-hero-accent',
                 galleryImage1: 'site-img-gallery1',
                 galleryImage2: 'site-img-gallery2',
                 galleryImage3: 'site-img-gallery3',
@@ -3872,10 +3903,8 @@
         }
 
         /* ---------------- SETTINGS ---------------- */
-        function switchSettingsTab(event, paneId) {
-            document.querySelectorAll('.settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
-            document.querySelectorAll('.settings-pane').forEach(pane => pane.classList.remove('active-pane'));
-            event.currentTarget.classList.add('active-settings-tab');
+        function switchSettingsTab(paneId) {
+            document.querySelectorAll('#view-settings .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
             document.getElementById(paneId).classList.add('active-pane');
         }
 
