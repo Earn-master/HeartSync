@@ -496,6 +496,29 @@
             object-fit: cover;
         }
 
+        .hero-carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        .hero-carousel .carousel-slide {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transform: scale(1.08);
+            transition: opacity 1.4s ease, transform 3.2s ease;
+        }
+
+        .hero-carousel .carousel-slide.active {
+            opacity: 1;
+            transform: scale(1);
+            z-index: 1;
+        }
+
         .hero-card-1 {
             transform: rotate(-8px) translate(-40px, 20px);
             z-index: 1;
@@ -1995,8 +2018,30 @@
         .safety-section { flex-direction: column; }
         .chat-sidebar { display: flex; }
         .settings-container { grid-template-columns: 100%; }
-        .settings-nav { display: flex; overflow-x: auto; padding: 10px; gap: 8px; }
-        .settings-nav-btn { white-space: nowrap; padding: 10px 16px; }
+        .settings-nav {
+            display: flex;
+            overflow-x: auto;
+            padding: 14px 16px;
+            gap: 10px;
+            scroll-snap-type: x proximity;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+        .settings-nav::-webkit-scrollbar { display: none; }
+        .settings-nav-btn {
+            white-space: nowrap;
+            flex: 0 0 auto;
+            scroll-snap-align: start;
+            padding: 10px 18px;
+            border-radius: var(--radius-full);
+            background-color: var(--bg-surface);
+            border: 1px solid var(--border);
+        }
+        .settings-nav-btn:hover, .settings-nav-btn.active-settings-tab {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
         .main-content-panel { padding: 20px 16px; }
 
         /* --- Phone-frame presentation on wider screens --- */
@@ -2125,7 +2170,18 @@
                 <div class="hero-graphics">
                     <div class="hero-img-stack">
                         <div class="hero-card hero-card-1">
-                            <img id="site-img-hero1" src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
+                            <div class="hero-carousel" id="hero-carousel">
+                                <img id="site-img-hero1" class="carousel-slide active" src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1027/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1005/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1011/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1012/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1025/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1035/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1040/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1041/400/600" alt="Dating Profile Match">
+                                <img class="carousel-slide" src="https://picsum.photos/id/1043/400/600" alt="Dating Profile Match">
+                            </div>
                         </div>
                         <div class="hero-card hero-card-2">
                             <img id="site-img-hero2" src="https://picsum.photos/id/91/400/600" alt="Happy Couple Interaction">
@@ -2348,8 +2404,10 @@
                             </select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Your City</label>
-                            <input type="text" class="form-control" id="ob-location" placeholder="Paris, France" required>
+                            <label class="form-label">Your Country</label>
+                            <select class="form-control country-select" id="ob-location" required>
+                                <option value="" disabled selected>Select your country</option>
+                            </select>
                         </div>
                     </div>
 
@@ -2775,7 +2833,9 @@
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Update Display Location</label>
-                                <input type="text" class="form-control" id="set-location" placeholder="Paris, France">
+                                <select class="form-control country-select" id="set-location">
+                                    <option value="" disabled selected>Select your country</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label class="form-label">Bio</label>
@@ -2874,6 +2934,8 @@
             initNavbarScrollEffect();
             loadPublicStats();
             loadSiteSettings();
+            populateCountrySelects();
+            initHeroCarousel();
 
             const token = getToken();
             if (token) {
@@ -2897,6 +2959,58 @@
         function hideBootLoader() {
             const loader = document.getElementById('appBootLoader');
             if (loader) loader.classList.add('boot-hidden');
+        }
+
+        /* ---------------- COUNTRY SELECT (location fields) ---------------- */
+        const COUNTRY_LIST = [
+            "Afghanistan","Albania","Algeria","Andorra","Angola","Argentina","Armenia","Australia","Austria",
+            "Azerbaijan","Bahamas","Bahrain","Bangladesh","Barbados","Belarus","Belgium","Belize","Benin",
+            "Bhutan","Bolivia","Bosnia and Herzegovina","Botswana","Brazil","Brunei","Bulgaria","Burkina Faso",
+            "Burundi","Cabo Verde","Cambodia","Cameroon","Canada","Central African Republic","Chad","Chile",
+            "China","Colombia","Comoros","Congo (DRC)","Congo (Republic)","Costa Rica","Croatia","Cuba",
+            "Cyprus","Czechia","Denmark","Djibouti","Dominica","Dominican Republic","Ecuador","Egypt",
+            "El Salvador","Equatorial Guinea","Eritrea","Estonia","Eswatini","Ethiopia","Fiji","Finland",
+            "France","Gabon","Gambia","Georgia","Germany","Ghana","Greece","Grenada","Guatemala","Guinea",
+            "Guinea-Bissau","Guyana","Haiti","Honduras","Hungary","Iceland","India","Indonesia","Iran","Iraq",
+            "Ireland","Israel","Italy","Ivory Coast","Jamaica","Japan","Jordan","Kazakhstan","Kenya","Kiribati",
+            "Kosovo","Kuwait","Kyrgyzstan","Laos","Latvia","Lebanon","Lesotho","Liberia","Libya","Liechtenstein",
+            "Lithuania","Luxembourg","Madagascar","Malawi","Malaysia","Maldives","Mali","Malta",
+            "Marshall Islands","Mauritania","Mauritius","Mexico","Micronesia","Moldova","Monaco","Mongolia",
+            "Montenegro","Morocco","Mozambique","Myanmar","Namibia","Nauru","Nepal","Netherlands","New Zealand",
+            "Nicaragua","Niger","Nigeria","North Korea","North Macedonia","Norway","Oman","Pakistan","Palau",
+            "Palestine","Panama","Papua New Guinea","Paraguay","Peru","Philippines","Poland","Portugal","Qatar",
+            "Romania","Russia","Rwanda","Saint Kitts and Nevis","Saint Lucia","Saint Vincent and the Grenadines",
+            "Samoa","San Marino","Sao Tome and Principe","Saudi Arabia","Senegal","Serbia","Seychelles",
+            "Sierra Leone","Singapore","Slovakia","Slovenia","Solomon Islands","Somalia","South Africa",
+            "South Korea","South Sudan","Spain","Sri Lanka","Sudan","Suriname","Sweden","Switzerland","Syria",
+            "Taiwan","Tajikistan","Tanzania","Thailand","Timor-Leste","Togo","Tonga","Trinidad and Tobago",
+            "Tunisia","Turkey","Turkmenistan","Tuvalu","Uganda","Ukraine","United Arab Emirates",
+            "United Kingdom","United States","Uruguay","Uzbekistan","Vanuatu","Vatican City","Venezuela",
+            "Vietnam","Yemen","Zambia","Zimbabwe"
+        ];
+
+        function initHeroCarousel() {
+            const carousel = document.getElementById('hero-carousel');
+            if (!carousel) return;
+            const slides = carousel.querySelectorAll('.carousel-slide');
+            if (slides.length < 2) return;
+            let current = 0;
+            setInterval(() => {
+                slides[current].classList.remove('active');
+                current = (current + 1) % slides.length;
+                slides[current].classList.add('active');
+            }, 2800);
+        }
+
+        function populateCountrySelects() {
+            document.querySelectorAll('select.country-select').forEach(select => {
+                COUNTRY_LIST.forEach(country => {
+                    const opt = document.createElement('option');
+                    opt.value = country;
+                    opt.textContent = country;
+                    select.appendChild(opt);
+                });
+            });
         }
 
         /* ---------------- HOMEPAGE SITE SETTINGS (admin-managed) ---------------- */
