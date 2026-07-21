@@ -986,6 +986,30 @@
             text-align: left;
         }
 
+        .pm-payment-nav {
+            display: grid !important;
+            grid-template-columns: repeat(2, 1fr);
+            overflow-x: visible !important;
+            gap: 8px;
+            padding: 0 !important;
+        }
+
+        .pm-payment-nav .settings-nav-btn {
+            white-space: nowrap;
+            justify-content: center;
+            border-radius: var(--radius-md);
+            background-color: var(--bg-body);
+            border: 1px solid var(--border);
+            padding: 10px 12px;
+        }
+
+        .pm-payment-nav .settings-nav-btn:hover,
+        .pm-payment-nav .settings-nav-btn.active-settings-tab {
+            background-color: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
         .close-modal {
             position: absolute;
             top: 20px;
@@ -2204,24 +2228,9 @@
             <h3 class="auth-title" style="text-align:left; margin-bottom:4px;">Choose How to Pay</h3>
             <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;" id="pm-selected-plan-label">Pick a payment method for your plan.</p>
 
-            <div class="form-group">
-                <label class="form-label">Plan</label>
-                <div style="display:flex; gap:16px; flex-wrap:wrap;">
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="pm-tier" value="plus" checked onchange="onPaymentTierChange()"> Spark — $5/mo
-                    </label>
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="pm-tier" value="gold" onchange="onPaymentTierChange()"> Gold — $12/mo
-                    </label>
-                    <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                        <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $29.99/mo
-                    </label>
-                </div>
-            </div>
-
-            <div class="settings-nav" style="margin-top:20px;">
+            <div class="settings-nav pm-payment-nav" style="margin-top:20px;">
                 <button class="settings-nav-btn active-settings-tab" id="pm-tab-btn-card" onclick="switchPaymentTab(event, 'pm-pane-card')"><i class="fa-solid fa-credit-card"></i> Card</button>
-                <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> Mobile Money</button>
+                <button class="settings-nav-btn" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> USSD</button>
                 <button class="settings-nav-btn" id="pm-tab-btn-paypal" onclick="switchPaymentTab(event, 'pm-pane-paypal')"><i class="fa-brands fa-paypal"></i> PayPal</button>
                 <button class="settings-nav-btn" id="pm-tab-btn-giftcard" onclick="switchPaymentTab(event, 'pm-pane-giftcard')"><i class="fa-solid fa-gift"></i> Gift Card</button>
             </div>
@@ -2233,19 +2242,19 @@
                     <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout(getSelectedPaymentTier())" id="pm-card-btn">Pay with Card</button>
                 </div>
 
-                <!-- Mobile Money / Paystack (Ghana, GHS only) -->
+                <!-- USSD / Paystack (Ghana, GHS only) -->
                 <div class="settings-pane" id="pm-pane-ussd">
                     <div id="pm-ussd-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
                     <div id="pm-ussd-form">
                         <div class="form-group">
-                            <label class="form-label">Mobile Money Provider</label>
+                            <label class="form-label">USSD Provider</label>
                             <select class="form-control" id="pm-ussd-bank"></select>
                         </div>
                         <div class="form-group">
-                            <label class="form-label">Mobile Money Number</label>
+                            <label class="form-label">Phone Number</label>
                             <input type="tel" class="form-control" id="pm-ussd-phone" placeholder="e.g. 0551234567">
                         </div>
-                        <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Pay with Mobile Money</button>
+                        <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Pay with USSD</button>
                         <div id="pm-ussd-result" style="display:none; margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:10px; text-align:center;">
                             <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Approve the prompt sent to your phone to complete payment:</p>
                             <div id="pm-ussd-code" style="font-size:1.4rem; font-weight:700; letter-spacing:1px;"></div>
@@ -2260,7 +2269,7 @@
                         <i class="fa-brands fa-paypal" style="font-size:2rem; color:var(--text-muted);"></i>
                         <p style="margin-top:10px; font-weight:600;">PayPal Checkout</p>
                         <span class="admin-badge off" style="display:inline-block; margin-top:6px;">Coming Soon</span>
-                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;">We're working on adding PayPal support. In the meantime, please use Card, Mobile Money, or Gift Card.</p>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;">We're working on adding PayPal support. In the meantime, please use Card, USSD, or Gift Card.</p>
                         <button class="btn btn-secondary" style="width:100%; margin-top:12px;" disabled>PayPal — Coming Soon</button>
                     </div>
                 </div>
@@ -4004,10 +4013,11 @@
             platinum: 'HeartSync Platinum — $29.99/mo'
         };
 
+        let selectedPremiumTier = null;
+
         function selectPremiumPlan(tier) {
-            const radio = document.querySelector(`input[name="pm-tier"][value="${tier}"]`);
-            if (radio) radio.checked = true;
-            onPaymentTierChange();
+            selectedPremiumTier = tier;
+            resetPaymentMethodState();
 
             const label = document.getElementById('pm-selected-plan-label');
             if (label) label.innerText = `Choose how you'd like to pay for ${PREMIUM_TIER_LABELS[tier] || 'your plan'}.`;
@@ -4045,16 +4055,16 @@
         let pmPaystackPollTimer = null;
 
         function getSelectedPaymentTier() {
-            const checked = document.querySelector('input[name="pm-tier"]:checked');
-            return checked ? checked.value : 'gold';
+            return selectedPremiumTier || 'gold';
         }
 
-        function onPaymentTierChange() {
-            // Reset any in-progress USSD flow when the plan changes.
+        function resetPaymentMethodState() {
+            // Reset any in-progress USSD flow when a new plan is opened.
             document.getElementById('pm-ussd-result').style.display = "none";
             document.getElementById('pm-ussd-code').innerText = "";
             if (pmPaystackPollTimer) { clearInterval(pmPaystackPollTimer); pmPaystackPollTimer = null; }
         }
+
 
         function switchPaymentTab(event, paneId) {
             document.querySelectorAll('#premiumModalOverlay .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
@@ -4088,7 +4098,7 @@
             await loadMyGiftcards();
         }
 
-        /* ---- Mobile Money via Paystack (Ghana, GHS only) ---- */
+        /* ---- USSD via Paystack (Ghana, GHS only) ---- */
         async function loadPaystackBanks() {
             const select = document.getElementById('pm-ussd-bank');
             const disabledMsg = document.getElementById('pm-ussd-disabled-msg');
@@ -4097,7 +4107,7 @@
                 const data = await apiFetch('/api/premium/paystack/banks');
                 select.innerHTML = data.providers.map(p => `<option value="${p.code}">${escapeHtml(p.name)}</option>`).join('');
                 if (!data.enabled) {
-                    disabledMsg.innerText = "Mobile Money payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
+                    disabledMsg.innerText = "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
                     disabledMsg.style.display = "block";
                     form.style.display = "none";
                 } else {
@@ -4105,7 +4115,7 @@
                     form.style.display = "block";
                 }
             } catch (err) {
-                disabledMsg.innerText = "Couldn't load Mobile Money payment options right now.";
+                disabledMsg.innerText = "Couldn't load USSD payment options right now.";
                 disabledMsg.style.display = "block";
                 form.style.display = "none";
             }
@@ -4117,7 +4127,7 @@
             const phone = document.getElementById('pm-ussd-phone').value.trim();
             const tier = getSelectedPaymentTier();
             if (!phone) {
-                showToast("Phone Number Required", "Enter the mobile money number to pay from.", "fa-triangle-exclamation");
+                showToast("Phone Number Required", "Enter the phone number to pay from.", "fa-triangle-exclamation");
                 return;
             }
             btn.disabled = true;
@@ -4133,7 +4143,7 @@
                 document.getElementById('pm-ussd-result').style.display = "block";
                 pollPaystackVerification(data.reference, tier);
             } catch (err) {
-                showToast("Mobile Money Payment Unavailable", err.message, "fa-triangle-exclamation");
+                showToast("USSD Payment Unavailable", err.message, "fa-triangle-exclamation");
             } finally {
                 btn.disabled = false;
                 btn.innerText = originalText;
