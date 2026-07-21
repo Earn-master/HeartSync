@@ -17,12 +17,10 @@ if (!JWT_SECRET) {
 const PORT = process.env.PORT || 3000;
 const MAX_PHOTOS = 6;
 
-// Comma-separated list of emails that are auto-promoted to admin on signup/login.
-// Set ADMIN_EMAILS in your environment, e.g. ADMIN_EMAILS=you@example.com,ops@example.com
-const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map(e => e.trim().toLowerCase())
-    .filter(Boolean);
+// The admin dashboard is a fully separate system from regular user accounts —
+// admins are their own table, log in with a username + password only (never
+// an email), and are managed at ADMIN_JWT_SECRET / /api/admin-auth/*. See below.
+const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET || (JWT_SECRET + ':admin');
 
 const app = express();
 const server = http.createServer(app);
@@ -35,6 +33,29 @@ app.use(express.json({ limit: '20mb' })); // photos / site images are sent as ba
 let stripe = null;
 if (process.env.STRIPE_SECRET_KEY) {
     stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+}
+
+// ---------- Paystack (optional - only activates if PAYSTACK_SECRET_KEY is set) ----------
+// Used specifically for USSD payments (Nigeria). Node 18+ has global fetch built in.
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || null;
+const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY || 'NGN';
+const PAYSTACK_AMOUNTS = {
+    gold: process.env.PAYSTACK_AMOUNT_GOLD ? parseInt(process.env.PAYSTACK_AMOUNT_GOLD, 10) : null,
+    platinum: process.env.PAYSTACK_AMOUNT_PLATINUM ? parseInt(process.env.PAYSTACK_AMOUNT_PLATINUM, 10) : null
+};
+const PAYSTACK_USSD_BANKS = { '737': 'GTBank', '919': 'UBA', '822': 'Sterling Bank', '966': 'Polaris Bank' };
+
+async function paystackRequest(endpoint, method, body) {
+    const res = await fetch(`https://api.paystack.co${endpoint}`, {
+        method,
+        headers: {
+            'Authorization': `Bearer ${PAYSTACK_SECRET_KEY}`,
+            'Content-Type': 'application/json'
+        },
+        body: body ? JSON.stringify(body) : undefined
+    });
+    const data = await res.json();
+    return { ok: res.ok, data };
 }
 
 // ---------- Helpers ----------
@@ -85,18 +106,8 @@ function meProfile(row) {
         notifEmailMatches: row.notif_email_matches,
         notifPushMessages: row.notif_push_messages,
         incognito: row.incognito,
-        isAdmin: row.is_admin,
         age: calcAge(row.dob)
     };
-}
-
-// Promotes a user to admin in the DB if their email is in ADMIN_EMAILS
-// and they aren't already flagged. Returns the (possibly updated) user row.
-async function applyAdminAutoPromotion(user) {
-    if (!user || user.is_admin) return user;
-    if (!ADMIN_EMAILS.includes(String(user.email).toLowerCase())) return user;
-    const result = await pool.query('UPDATE users SET is_admin = TRUE WHERE id = $1 RETURNING *', [user.id]);
-    return result.rows[0];
 }
 
 async function authRequired(req, res, next) {
@@ -113,13 +124,6 @@ async function authRequired(req, res, next) {
     } catch (err) {
         return res.status(401).json({ error: 'Invalid or expired session.' });
     }
-}
-
-function adminRequired(req, res, next) {
-    if (!req.user || !req.user.is_admin) {
-        return res.status(403).json({ error: 'Admin access required.' });
-    }
-    next();
 }
 
 async function getOrCreateMatchId(userAId, userBId) {
@@ -151,8 +155,7 @@ app.post('/api/auth/signup', async (req, res) => {
             `INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING *`,
             [normalizedEmail, hash, name.trim()]
         );
-        let user = result.rows[0];
-        user = await applyAdminAutoPromotion(user);
+        const user = result.rows[0];
         res.status(201).json({ token: signToken(user), user: meProfile(user) });
     } catch (err) {
         console.error(err);
@@ -171,7 +174,6 @@ app.post('/api/auth/login', async (req, res) => {
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: 'Incorrect email or password.' });
         if (user.banned) return res.status(403).json({ error: 'This account has been suspended. Contact support if you think this is a mistake.' });
-        user = await applyAdminAutoPromotion(user);
         res.json({ token: signToken(user), user: meProfile(user) });
     } catch (err) {
         console.error(err);
@@ -555,9 +557,304 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 });
 
 // =====================================================================
-// ADMIN DASHBOARD
+// PAYSTACK USSD CHECKOUT (Nigeria) — opt-in via PAYSTACK_SECRET_KEY
 // =====================================================================
-const adminAuth = [authRequired, adminRequired];
+app.get('/api/premium/paystack/banks', (req, res) => {
+    res.json({
+        enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
+        currency: PAYSTACK_CURRENCY,
+        banks: Object.entries(PAYSTACK_USSD_BANKS).map(([code, name]) => ({ code, name }))
+    });
+});
+
+app.post('/api/premium/paystack/ussd/initiate', authRequired, async (req, res) => {
+    if (!PAYSTACK_SECRET_KEY) {
+        return res.status(501).json({ error: 'USSD payments are not configured on this deployment yet. Set PAYSTACK_SECRET_KEY, PAYSTACK_AMOUNT_GOLD and PAYSTACK_AMOUNT_PLATINUM in your environment to enable it.' });
+    }
+    try {
+        const { tier, bankCode } = req.body; // 'gold' | 'platinum', '737' | '919' | '822' | '966'
+        if (!['gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
+        if (!PAYSTACK_USSD_BANKS[bankCode]) return res.status(400).json({ error: 'Choose a valid bank for USSD payment.' });
+        const amount = PAYSTACK_AMOUNTS[tier];
+        if (!amount) return res.status(400).json({ error: 'That plan is not configured for USSD payment.' });
+
+        const reference = `hsync_${req.user.id}_${Date.now()}`;
+        const { ok, data } = await paystackRequest('/transaction/charge', 'POST', {
+            reference,
+            amount,
+            email: req.user.email,
+            currency: PAYSTACK_CURRENCY,
+            ussd: { type: bankCode },
+            metadata: { userId: String(req.user.id), tier }
+        });
+        if (!ok || !data.status) {
+            return res.status(400).json({ error: (data && data.message) || 'Could not start the USSD charge.' });
+        }
+
+        await pool.query(
+            `INSERT INTO paystack_transactions (user_id, reference, tier, amount, currency, ussd_type, status)
+             VALUES ($1, $2, $3, $4, $5, $6, 'pending')`,
+            [req.user.id, reference, tier, amount, PAYSTACK_CURRENCY, bankCode]
+        );
+
+        res.json({
+            reference,
+            ussdCode: data.data.ussd_code || null,
+            displayText: data.data.display_text || `Dial the USSD code shown to complete your ${PAYSTACK_USSD_BANKS[bankCode]} payment.`,
+            status: data.data.status || 'pay_offline'
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not start USSD checkout.' });
+    }
+});
+
+// The frontend polls this after showing the USSD code, so the user sees
+// their Premium unlock the moment they finish paying on their phone.
+app.get('/api/premium/paystack/verify/:reference', authRequired, async (req, res) => {
+    if (!PAYSTACK_SECRET_KEY) return res.status(501).json({ error: 'USSD payments are not configured on this deployment.' });
+    try {
+        const txResult = await pool.query('SELECT * FROM paystack_transactions WHERE reference = $1 AND user_id = $2', [req.params.reference, req.user.id]);
+        const tx = txResult.rows[0];
+        if (!tx) return res.status(404).json({ error: 'Transaction not found.' });
+
+        if (tx.status === 'success') return res.json({ status: 'success' });
+
+        const { ok, data } = await paystackRequest(`/transaction/verify/${encodeURIComponent(req.params.reference)}`, 'GET');
+        if (!ok || !data.status) return res.json({ status: 'pending' });
+
+        const paystackStatus = data.data && data.data.status;
+        if (paystackStatus === 'success') {
+            await pool.query('UPDATE users SET is_premium = TRUE, premium_tier = $1 WHERE id = $2', [tx.tier, req.user.id]);
+            await pool.query(`UPDATE paystack_transactions SET status = 'success', updated_at = NOW() WHERE reference = $1`, [tx.reference]);
+            return res.json({ status: 'success' });
+        }
+        if (paystackStatus === 'failed' || paystackStatus === 'abandoned') {
+            await pool.query(`UPDATE paystack_transactions SET status = 'failed', updated_at = NOW() WHERE reference = $1`, [tx.reference]);
+            return res.json({ status: 'failed' });
+        }
+        res.json({ status: 'pending' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not verify payment.' });
+    }
+});
+
+// Paystack webhook — the reliable way this gets confirmed even if the user
+// never returns to the tab to trigger the /verify poll above.
+app.post('/api/webhooks/paystack', express.raw({ type: 'application/json' }), async (req, res) => {
+    if (!PAYSTACK_SECRET_KEY) return res.status(404).end();
+    try {
+        const crypto = require('crypto');
+        const signature = req.headers['x-paystack-signature'];
+        const hash = crypto.createHmac('sha512', PAYSTACK_SECRET_KEY).update(req.body).digest('hex');
+        if (hash !== signature) return res.status(401).end();
+
+        const event = JSON.parse(req.body.toString('utf8'));
+        if (event.event === 'charge.success') {
+            const reference = event.data.reference;
+            const metadata = event.data.metadata || {};
+            const txResult = await pool.query('SELECT * FROM paystack_transactions WHERE reference = $1', [reference]);
+            const tx = txResult.rows[0];
+            const userId = (tx && tx.user_id) || (metadata && metadata.userId);
+            const tier = (tx && tx.tier) || (metadata && metadata.tier) || 'gold';
+            if (userId) {
+                await pool.query('UPDATE users SET is_premium = TRUE, premium_tier = $1 WHERE id = $2', [tier, userId]);
+                await pool.query(`UPDATE paystack_transactions SET status = 'success', updated_at = NOW() WHERE reference = $1`, [reference]);
+            }
+        }
+        res.json({ received: true });
+    } catch (err) {
+        console.error(err);
+        res.status(400).json({ error: 'Invalid webhook.' });
+    }
+});
+
+// =====================================================================
+// PAYPAL — coming soon. Endpoint exists so the frontend has something real
+// to call, but it always reports that PayPal checkout isn't live yet.
+// =====================================================================
+app.post('/api/premium/paypal/checkout', authRequired, (req, res) => {
+    res.status(501).json({ error: 'PayPal is coming soon and is not available yet. Please use Card, USSD, or Gift Card for now.', comingSoon: true });
+});
+
+// =====================================================================
+// GIFT CARD REDEMPTION — the user only ever submits the gift card's ID/code.
+// Nothing is auto-verified; an admin manually checks it and approves or
+// rejects it from the separate admin dashboard.
+// =====================================================================
+app.post('/api/premium/giftcard/redeem', authRequired, async (req, res) => {
+    try {
+        const { tier, code } = req.body;
+        if (!['gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
+        const trimmedCode = String(code || '').trim();
+        if (!trimmedCode) return res.status(400).json({ error: 'Enter your gift card ID/code.' });
+        if (trimmedCode.length > 100) return res.status(400).json({ error: 'That code looks too long to be valid.' });
+
+        const result = await pool.query(
+            `INSERT INTO giftcard_redemptions (user_id, code, tier, status) VALUES ($1, $2, $3, 'pending') RETURNING *`,
+            [req.user.id, trimmedCode, tier]
+        );
+        res.status(201).json({
+            redemption: {
+                id: result.rows[0].id,
+                code: result.rows[0].code,
+                tier: result.rows[0].tier,
+                status: result.rows[0].status,
+                createdAt: result.rows[0].created_at
+            }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not submit gift card.' });
+    }
+});
+
+// Lets the user see the status of gift cards they've submitted.
+app.get('/api/premium/giftcard/mine', authRequired, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, code, tier, status, admin_note, created_at, reviewed_at FROM giftcard_redemptions
+             WHERE user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+            [req.user.id]
+        );
+        res.json({
+            redemptions: result.rows.map(r => ({
+                id: r.id, code: r.code, tier: r.tier, status: r.status,
+                adminNote: r.admin_note, createdAt: r.created_at, reviewedAt: r.reviewed_at
+            }))
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load gift card submissions.' });
+    }
+});
+
+// =====================================================================
+// ADMIN DASHBOARD — completely separate auth system from regular users.
+// Admins live in their own `admins` table and log in at /admin with just
+// a username + password (no email, no shared login with the dating app).
+// =====================================================================
+function signAdminToken(admin) {
+    return jwt.sign({ adminId: admin.id, username: admin.username, scope: 'admin' }, ADMIN_JWT_SECRET, { expiresIn: '12h' });
+}
+
+async function adminTokenRequired(req, res, next) {
+    const header = req.headers.authorization || '';
+    const token = header.startsWith('Bearer ') ? header.slice(7) : null;
+    if (!token) return res.status(401).json({ error: 'Admin authentication required.' });
+    try {
+        const payload = jwt.verify(token, ADMIN_JWT_SECRET);
+        if (payload.scope !== 'admin') return res.status(401).json({ error: 'Invalid admin session.' });
+        const result = await pool.query('SELECT * FROM admins WHERE id = $1', [payload.adminId]);
+        if (!result.rows[0]) return res.status(401).json({ error: 'Admin account no longer exists.' });
+        req.admin = result.rows[0];
+        next();
+    } catch (err) {
+        return res.status(401).json({ error: 'Invalid or expired admin session.' });
+    }
+}
+
+// One-time bootstrap: if no admins exist yet and ADMIN_USERNAME/ADMIN_PASSWORD
+// are set in the environment, create the first admin account automatically.
+async function bootstrapFirstAdmin() {
+    try {
+        const { rows } = await pool.query('SELECT COUNT(*)::int AS c FROM admins');
+        if (rows[0].c > 0) return;
+        const username = (process.env.ADMIN_USERNAME || '').trim();
+        const password = process.env.ADMIN_PASSWORD || '';
+        if (!username || !password) {
+            console.warn('No admin account exists yet. Set ADMIN_USERNAME and ADMIN_PASSWORD in your environment to create the first one automatically, or insert one directly into the admins table.');
+            return;
+        }
+        const hash = await bcrypt.hash(password, 12);
+        await pool.query('INSERT INTO admins (username, password_hash) VALUES ($1, $2) ON CONFLICT (username) DO NOTHING', [username.toLowerCase(), hash]);
+        console.log(`Bootstrapped first admin account: ${username.toLowerCase()}`);
+    } catch (err) {
+        console.error('Could not bootstrap first admin account:', err);
+    }
+}
+
+app.post('/api/admin-auth/login', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
+        const normalized = String(username).trim().toLowerCase();
+        const result = await pool.query('SELECT * FROM admins WHERE username = $1', [normalized]);
+        const admin = result.rows[0];
+        if (!admin) return res.status(401).json({ error: 'Incorrect username or password.' });
+        const valid = await bcrypt.compare(password, admin.password_hash);
+        if (!valid) return res.status(401).json({ error: 'Incorrect username or password.' });
+        res.json({ token: signAdminToken(admin), admin: { id: admin.id, username: admin.username } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Admin login failed. Please try again.' });
+    }
+});
+
+app.get('/api/admin-auth/me', adminTokenRequired, (req, res) => {
+    res.json({ admin: { id: req.admin.id, username: req.admin.username } });
+});
+
+// Change the current admin's own password.
+app.put('/api/admin-auth/password', adminTokenRequired, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+        if (!currentPassword || !newPassword) return res.status(400).json({ error: 'Current and new password are required.' });
+        if (newPassword.length < 8) return res.status(400).json({ error: 'New password must be at least 8 characters.' });
+        const valid = await bcrypt.compare(currentPassword, req.admin.password_hash);
+        if (!valid) return res.status(401).json({ error: 'Current password is incorrect.' });
+        const hash = await bcrypt.hash(newPassword, 12);
+        await pool.query('UPDATE admins SET password_hash = $1 WHERE id = $2', [hash, req.admin.id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not change password.' });
+    }
+});
+
+// List / create other admin accounts (any logged-in admin can add another).
+app.get('/api/admin-auth/admins', adminTokenRequired, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT id, username, created_at FROM admins ORDER BY created_at ASC');
+        res.json({ admins: result.rows });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load admins.' });
+    }
+});
+
+app.post('/api/admin-auth/admins', adminTokenRequired, async (req, res) => {
+    try {
+        const { username, password } = req.body;
+        if (!username || !password) return res.status(400).json({ error: 'Username and password are required.' });
+        if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
+        const normalized = String(username).trim().toLowerCase();
+        const existing = await pool.query('SELECT id FROM admins WHERE username = $1', [normalized]);
+        if (existing.rows[0]) return res.status(409).json({ error: 'That username is already taken.' });
+        const hash = await bcrypt.hash(password, 12);
+        const result = await pool.query('INSERT INTO admins (username, password_hash) VALUES ($1, $2) RETURNING id, username, created_at', [normalized, hash]);
+        res.status(201).json({ admin: result.rows[0] });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not create admin.' });
+    }
+});
+
+app.delete('/api/admin-auth/admins/:id', adminTokenRequired, async (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        if (targetId === req.admin.id) return res.status(400).json({ error: "You can't delete your own admin account while logged in as it." });
+        const result = await pool.query('DELETE FROM admins WHERE id = $1 RETURNING id', [targetId]);
+        if (!result.rows[0]) return res.status(404).json({ error: 'Admin not found.' });
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not delete admin.' });
+    }
+});
+
+const adminAuth = [adminTokenRequired];
 
 function adminUserRow(row) {
     return {
@@ -580,15 +877,16 @@ function adminUserRow(row) {
 
 app.get('/api/admin/overview', adminAuth, async (req, res) => {
     try {
-        const [users, verified, premium, admins, banned, matches, messages, newUsers] = await Promise.all([
+        const [users, verified, premium, admins, banned, matches, messages, newUsers, pendingGiftcards] = await Promise.all([
             pool.query('SELECT COUNT(*)::int AS c FROM users'),
             pool.query('SELECT COUNT(*)::int AS c FROM users WHERE verified = TRUE'),
             pool.query('SELECT COUNT(*)::int AS c FROM users WHERE is_premium = TRUE'),
-            pool.query('SELECT COUNT(*)::int AS c FROM users WHERE is_admin = TRUE'),
+            pool.query('SELECT COUNT(*)::int AS c FROM admins'),
             pool.query('SELECT COUNT(*)::int AS c FROM users WHERE banned = TRUE'),
             pool.query('SELECT COUNT(*)::int AS c FROM matches'),
             pool.query('SELECT COUNT(*)::int AS c FROM messages'),
-            pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at > NOW() - INTERVAL '7 days'`)
+            pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at > NOW() - INTERVAL '7 days'`),
+            pool.query(`SELECT COUNT(*)::int AS c FROM giftcard_redemptions WHERE status = 'pending'`)
         ]);
         res.json({
             totalUsers: users.rows[0].c,
@@ -598,7 +896,8 @@ app.get('/api/admin/overview', adminAuth, async (req, res) => {
             bannedUsers: banned.rows[0].c,
             totalMatches: matches.rows[0].c,
             totalMessages: messages.rows[0].c,
-            newUsersLast7Days: newUsers.rows[0].c
+            newUsersLast7Days: newUsers.rows[0].c,
+            pendingGiftcards: pendingGiftcards.rows[0].c
         });
     } catch (err) {
         console.error(err);
@@ -640,9 +939,6 @@ app.get('/api/admin/users', adminAuth, async (req, res) => {
 app.put('/api/admin/users/:id', adminAuth, async (req, res) => {
     try {
         const targetId = Number(req.params.id);
-        if (targetId === req.user.id) {
-            return res.status(400).json({ error: "You can't change your own account from the admin panel. Use Settings instead." });
-        }
         const colMap = {
             verified: 'verified',
             isPremium: 'is_premium',
@@ -676,9 +972,6 @@ app.put('/api/admin/users/:id', adminAuth, async (req, res) => {
 app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
     try {
         const targetId = Number(req.params.id);
-        if (targetId === req.user.id) {
-            return res.status(400).json({ error: "You can't delete your own account from the admin panel." });
-        }
         const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [targetId]);
         if (!result.rows[0]) return res.status(404).json({ error: 'User not found.' });
         res.json({ success: true });
@@ -730,6 +1023,70 @@ app.delete('/api/admin/matches/:id', adminAuth, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Could not delete match.' });
+    }
+});
+
+// ---- Gift card redemptions (manual verification queue) ----
+app.get('/api/admin/giftcards', adminAuth, async (req, res) => {
+    try {
+        const status = ['pending', 'approved', 'rejected'].includes(req.query.status) ? req.query.status : null;
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const pageSize = 25;
+        const offset = (page - 1) * pageSize;
+        const where = status ? 'WHERE g.status = $1' : '';
+        const params = status ? [status] : [];
+        const countResult = await pool.query(`SELECT COUNT(*)::int AS c FROM giftcard_redemptions g ${where}`, params);
+        const limitParams = [...params, pageSize, offset];
+        const result = await pool.query(
+            `SELECT g.*, u.name AS user_name, u.email AS user_email
+             FROM giftcard_redemptions g
+             JOIN users u ON u.id = g.user_id
+             ${where}
+             ORDER BY g.created_at DESC
+             LIMIT $${limitParams.length - 1} OFFSET $${limitParams.length}`,
+            limitParams
+        );
+        res.json({
+            redemptions: result.rows.map(r => ({
+                id: r.id,
+                code: r.code,
+                tier: r.tier,
+                status: r.status,
+                adminNote: r.admin_note,
+                user: { id: r.user_id, name: r.user_name, email: r.user_email },
+                createdAt: r.created_at,
+                reviewedAt: r.reviewed_at
+            })),
+            total: countResult.rows[0].c,
+            page,
+            pageSize
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load gift card submissions.' });
+    }
+});
+
+app.put('/api/admin/giftcards/:id', adminAuth, async (req, res) => {
+    try {
+        const { status, note } = req.body; // 'approved' | 'rejected'
+        if (!['approved', 'rejected'].includes(status)) return res.status(400).json({ error: 'Status must be approved or rejected.' });
+        const result = await pool.query('SELECT * FROM giftcard_redemptions WHERE id = $1', [req.params.id]);
+        const redemption = result.rows[0];
+        if (!redemption) return res.status(404).json({ error: 'Gift card submission not found.' });
+        if (redemption.status !== 'pending') return res.status(400).json({ error: 'This submission has already been reviewed.' });
+
+        await pool.query(
+            `UPDATE giftcard_redemptions SET status = $1, admin_note = $2, reviewed_by = $3, reviewed_at = NOW() WHERE id = $4`,
+            [status, note || '', req.admin.id, req.params.id]
+        );
+        if (status === 'approved') {
+            await pool.query('UPDATE users SET is_premium = TRUE, premium_tier = $1 WHERE id = $2', [redemption.tier, redemption.user_id]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not update gift card submission.' });
     }
 });
 
@@ -816,12 +1173,22 @@ io.on('connection', (socket) => {
 // Static frontend + health check
 // =====================================================================
 app.get('/healthz', (req, res) => res.json({ ok: true }));
+
+// The admin dashboard is a totally separate static site (its own HTML/CSS/JS,
+// its own login screen, its own token) served from /admin, so it never shares
+// a codebase, session, or login form with the member-facing app below.
+app.use('/admin', express.static(path.join(__dirname, 'public-admin')));
+app.get('/admin*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public-admin', 'admin.html'));
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 runMigrations()
+    .then(() => bootstrapFirstAdmin())
     .then(() => {
         server.listen(PORT, () => console.log(`HeartSync server running on port ${PORT}`));
     })

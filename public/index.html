@@ -1790,7 +1790,6 @@
             <li><a href="#" onclick="navigateTo('matches')">Matches</a></li>
             <li><a href="#" onclick="navigateTo('messages')">Messages</a></li>
             <li><a href="#" onclick="navigateTo('premium')">Premium</a></li>
-            <li id="nav-admin-link" style="display:none;"><a href="#" onclick="navigateTo('admin')"><i class="fa-solid fa-user-shield"></i> Admin</a></li>
         </ul>
         <div class="nav-actions">
             <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle dark mode">
@@ -1823,9 +1822,6 @@
         </a>
         <a href="#" class="mobile-nav-item" id="m-nav-settings" onclick="navigateTo('settings')">
             <i class="fa-solid fa-gear"></i>Settings
-        </a>
-        <a href="#" class="mobile-nav-item" id="m-nav-admin" onclick="navigateTo('admin')" style="display:none;">
-            <i class="fa-solid fa-user-shield"></i>Admin
         </a>
     </div>
 
@@ -2378,6 +2374,75 @@
                         <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout('platinum')" id="premium-btn-platinum">Upgrade Account</button>
                     </div>
                 </div>
+
+                <!-- --- OTHER WAYS TO PAY: USSD/Paystack, PayPal (coming soon), Gift Card --- -->
+                <div class="payment-methods-panel" style="max-width:640px; margin:40px auto 0;">
+                    <h3 style="margin-bottom:4px;">Other Ways to Pay</h3>
+                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:18px;">Pick a plan, then choose how you'd like to pay.</p>
+
+                    <div class="form-group">
+                        <label class="form-label">Plan</label>
+                        <div style="display:flex; gap:16px;">
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="radio" name="pm-tier" value="gold" checked onchange="onPaymentTierChange()"> Gold — $19.99/mo
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $34.99/mo
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="settings-nav" style="margin-top:20px;">
+                        <button class="settings-nav-btn active-settings-tab" id="pm-tab-btn-ussd" onclick="switchPaymentTab(event, 'pm-pane-ussd')"><i class="fa-solid fa-mobile-screen"></i> USSD (Paystack)</button>
+                        <button class="settings-nav-btn" id="pm-tab-btn-paypal" onclick="switchPaymentTab(event, 'pm-pane-paypal')"><i class="fa-brands fa-paypal"></i> PayPal</button>
+                        <button class="settings-nav-btn" id="pm-tab-btn-giftcard" onclick="switchPaymentTab(event, 'pm-pane-giftcard')"><i class="fa-solid fa-gift"></i> Gift Card</button>
+                    </div>
+
+                    <div class="settings-content-panel">
+                        <!-- USSD / Paystack -->
+                        <div class="settings-pane active-pane" id="pm-pane-ussd">
+                            <div id="pm-ussd-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
+                            <div id="pm-ussd-form">
+                                <div class="form-group">
+                                    <label class="form-label">Choose Your Bank</label>
+                                    <select class="form-control" id="pm-ussd-bank"></select>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%" onclick="startUssdPayment()" id="pm-ussd-btn">Get USSD Code</button>
+                                <div id="pm-ussd-result" style="display:none; margin-top:16px; padding:16px; border:1px solid var(--border); border-radius:10px; text-align:center;">
+                                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:6px;">Dial this code on the phone linked to your bank account:</p>
+                                    <div id="pm-ussd-code" style="font-size:1.4rem; font-weight:700; letter-spacing:1px;"></div>
+                                    <p id="pm-ussd-status" style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">Waiting for payment confirmation…</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- PayPal (coming soon) -->
+                        <div class="settings-pane" id="pm-pane-paypal">
+                            <div style="text-align:center; padding:24px 12px; border:1px dashed var(--border); border-radius:10px;">
+                                <i class="fa-brands fa-paypal" style="font-size:2rem; color:var(--text-muted);"></i>
+                                <p style="margin-top:10px; font-weight:600;">PayPal Checkout</p>
+                                <span class="admin-badge off" style="display:inline-block; margin-top:6px;">Coming Soon</span>
+                                <p style="color:var(--text-muted); font-size:0.85rem; margin-top:10px;">We're working on adding PayPal support. In the meantime, please use Card, USSD, or Gift Card.</p>
+                                <button class="btn btn-secondary" style="width:100%; margin-top:12px;" disabled>PayPal — Coming Soon</button>
+                            </div>
+                        </div>
+
+                        <!-- Gift Card -->
+                        <div class="settings-pane" id="pm-pane-giftcard">
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Enter your gift card ID/code below. Our team manually verifies each submission and unlocks Premium once approved — this usually just takes a moment to review.</p>
+                            <div class="form-group">
+                                <label class="form-label">Gift Card ID / Code</label>
+                                <input type="text" class="form-control" id="pm-giftcard-code" placeholder="e.g. HS-GIFT-XXXX-XXXX" maxlength="100">
+                            </div>
+                            <button class="btn btn-primary" style="width:100%" onclick="submitGiftcard()" id="pm-giftcard-btn">Submit Gift Card</button>
+
+                            <h4 style="margin:24px 0 10px;">Your Submissions</h4>
+                            <div id="pm-giftcard-list" style="display:flex; flex-direction:column; gap:8px;">
+                                <p style="color:var(--text-muted); font-size:0.85rem;">Loading…</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -2439,95 +2504,6 @@
                                 <button class="btn" style="background-color:#ff7675; color:white;" onclick="deleteAccountPermanently()">Delete Profile Permanently</button>
                             </div>
                         </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- --- 9. VIEW: ADMIN DASHBOARD --- -->
-        <section id="view-admin" class="app-view">
-            <div class="main-content-panel" style="width:100%;">
-                <h2 class="section-title" style="text-align:left; margin-bottom:4px;">Admin Dashboard</h2>
-                <p class="section-subtitle" style="text-align:left; margin-bottom:24px;">Manage members, matches, and the public homepage.</p>
-
-                <div class="settings-container">
-                    <div class="settings-nav">
-                        <button class="settings-nav-btn active-settings-tab" onclick="switchAdminTab(event, 'a-overview')"><i class="fa-solid fa-chart-line"></i> Overview</button>
-                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-users')"><i class="fa-solid fa-users"></i> Users</button>
-                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-content')"><i class="fa-solid fa-image"></i> Homepage Content</button>
-                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-matches')"><i class="fa-solid fa-heart"></i> Matches</button>
-                    </div>
-                    <div class="settings-content-panel">
-
-                        <!-- Overview -->
-                        <div class="settings-pane active-pane" id="a-overview">
-                            <h3 style="margin-bottom:16px;">Site Overview</h3>
-                            <div class="admin-stat-grid" id="adminOverviewGrid">
-                                <div class="admin-stat-card"><strong>—</strong><span>Total Members</span></div>
-                            </div>
-                            <button class="btn btn-secondary" onclick="loadAdminOverview()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
-                        </div>
-
-                        <!-- Users -->
-                        <div class="settings-pane" id="a-users">
-                            <h3 style="margin-bottom:16px;">Manage Users</h3>
-                            <div class="admin-toolbar">
-                                <input type="text" class="form-control" id="adminUserSearch" placeholder="Search by name or email..." style="max-width:280px;" onkeypress="if(event.key==='Enter') loadAdminUsers(1)">
-                                <button class="btn btn-primary" onclick="loadAdminUsers(1)"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
-                            </div>
-                            <div class="admin-table-wrap">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th><th>Email</th><th>Status</th><th>Premium</th><th>Role</th><th>Joined</th><th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="adminUsersTableBody">
-                                        <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users…</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="admin-pagination" id="adminUsersPagination"></div>
-                        </div>
-
-                        <!-- Homepage Content -->
-                        <div class="settings-pane" id="a-content">
-                            <h3 style="margin-bottom:6px;">Homepage Content</h3>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">Replace the default stock photos and headline shown to every visitor on the homepage.</p>
-
-                            <div class="form-group">
-                                <label class="form-label">Hero Headline</label>
-                                <input type="text" class="form-control" id="admin-hero-title" placeholder="Find the connection you've been searching for">
-                            </div>
-                            <div class="form-group">
-                                <label class="form-label">Hero Subheadline</label>
-                                <textarea class="form-control" id="admin-hero-subtitle" rows="2" placeholder="HeartSync uses intentional matching algorithms..."></textarea>
-                            </div>
-                            <button class="btn btn-primary" onclick="saveAdminHeroCopy()"><i class="fa-solid fa-floppy-disk"></i> Save Headline</button>
-
-                            <hr style="border:none; border-top:1px solid var(--border); margin:28px 0;">
-
-                            <h4 style="margin-bottom:6px;">Homepage Photos</h4>
-                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">Click a photo to upload a replacement (JPG/PNG, under 8MB). This replaces it for every visitor immediately.</p>
-                            <div class="site-image-grid" id="adminSiteImageGrid"></div>
-                        </div>
-
-                        <!-- Matches -->
-                        <div class="settings-pane" id="a-matches">
-                            <h3 style="margin-bottom:16px;">Matches</h3>
-                            <div class="admin-table-wrap">
-                                <table class="admin-table">
-                                    <thead>
-                                        <tr><th>Member 1</th><th>Member 2</th><th>Messages</th><th>Matched</th><th>Actions</th></tr>
-                                    </thead>
-                                    <tbody id="adminMatchesTableBody">
-                                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading matches…</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                            <div class="admin-pagination" id="adminMatchesPagination"></div>
-                        </div>
-
                     </div>
                 </div>
             </div>
@@ -2657,13 +2633,9 @@
 
         /* ---------------- ROUTER ---------------- */
         function navigateTo(viewId) {
-            const protectedViews = ["dashboard", "discover", "matches", "messages", "settings", "premium", "admin"];
+            const protectedViews = ["dashboard", "discover", "matches", "messages", "settings", "premium"];
             if (!state.user && protectedViews.includes(viewId)) {
                 openAuthModal('signup');
-                return;
-            }
-            if (viewId === 'admin' && !state.user.isAdmin) {
-                showToast("Admin Access Required", "Your account doesn't have admin permissions.", "fa-lock");
                 return;
             }
 
@@ -2691,12 +2663,7 @@
                 document.getElementById('activeChatWindow').style.display = "none";
             }
             if (viewId === 'settings') populateSettingsForm();
-            if (viewId === 'admin') {
-                loadAdminOverview();
-                loadAdminUsers(1);
-                loadAdminSiteSettingsForm();
-                loadAdminMatches(1);
-            }
+            if (viewId === 'premium') initPremiumPaymentMethods();
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2777,8 +2744,6 @@
             const navAvatar = document.getElementById('user-avatar-nav');
             navAvatar.style.display = "block";
             document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
-            document.getElementById('nav-admin-link').style.display = user.isAdmin ? "block" : "none";
-            document.getElementById('m-nav-admin').style.display = user.isAdmin ? "flex" : "none";
             connectSocket();
             if (isFresh) showToast("Welcome!", `Signed in as ${user.name}.`, "fa-circle-check");
         }
@@ -2790,8 +2755,6 @@
             document.getElementById('login-btn-nav').style.display = "inline-flex";
             document.getElementById('signup-btn-nav').style.display = "inline-flex";
             document.getElementById('user-avatar-nav').style.display = "none";
-            document.getElementById('nav-admin-link').style.display = "none";
-            document.getElementById('m-nav-admin').style.display = "none";
             navigateTo('home');
         }
 
@@ -3353,276 +3316,10 @@
             }
         }
 
-        /* ================================================================
-           ADMIN DASHBOARD
-           ================================================================ */
-        function switchAdminTab(event, paneId) {
-            document.querySelectorAll('#view-admin .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
-            document.querySelectorAll('#view-admin .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
-            event.currentTarget.classList.add('active-settings-tab');
-            document.getElementById(paneId).classList.add('active-pane');
-        }
-
         function escapeHtml(str) {
             const div = document.createElement('div');
             div.innerText = str == null ? '' : String(str);
             return div.innerHTML;
-        }
-
-        /* ---- Overview ---- */
-        async function loadAdminOverview() {
-            const grid = document.getElementById('adminOverviewGrid');
-            try {
-                const stats = await apiFetch('/api/admin/overview');
-                const cards = [
-                    { label: 'Total Members', value: stats.totalUsers },
-                    { label: 'Verified', value: stats.verifiedUsers },
-                    { label: 'Premium', value: stats.premiumUsers },
-                    { label: 'Admins', value: stats.adminUsers },
-                    { label: 'Suspended', value: stats.bannedUsers },
-                    { label: 'Total Matches', value: stats.totalMatches },
-                    { label: 'Messages Sent', value: stats.totalMessages },
-                    { label: 'New (7 days)', value: stats.newUsersLast7Days }
-                ];
-                grid.innerHTML = cards.map(c => `
-                    <div class="admin-stat-card"><strong>${c.value}</strong><span>${c.label}</span></div>
-                `).join('');
-            } catch (err) {
-                grid.innerHTML = `<div class="admin-stat-card"><span>Couldn't load overview: ${escapeHtml(err.message)}</span></div>`;
-            }
-        }
-
-        /* ---- Users ---- */
-        let adminUsersState = { page: 1, total: 0, pageSize: 25 };
-
-        async function loadAdminUsers(page) {
-            const tbody = document.getElementById('adminUsersTableBody');
-            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users…</td></tr>`;
-            try {
-                const search = document.getElementById('adminUserSearch').value.trim();
-                const query = search ? `?search=${encodeURIComponent(search)}&page=${page}` : `?page=${page}`;
-                const data = await apiFetch(`/api/admin/users${query}`);
-                adminUsersState = { page: data.page, total: data.total, pageSize: data.pageSize };
-                renderAdminUsersTable(data.users);
-                renderAdminPagination('adminUsersPagination', adminUsersState, loadAdminUsers);
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--primary);">${escapeHtml(err.message)}</td></tr>`;
-            }
-        }
-
-        function renderAdminUsersTable(users) {
-            const tbody = document.getElementById('adminUsersTableBody');
-            if (users.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No users found.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = users.map(u => `
-                <tr>
-                    <td>${escapeHtml(u.name)}</td>
-                    <td>${escapeHtml(u.email)}</td>
-                    <td>
-                        <span class="admin-badge ${u.verified ? 'on' : 'off'}">${u.verified ? 'Verified' : 'Unverified'}</span>
-                        ${u.banned ? '<span class="admin-badge danger">Suspended</span>' : ''}
-                    </td>
-                    <td><span class="admin-badge ${u.isPremium ? 'on' : 'off'}">${u.isPremium ? (u.premiumTier || 'Premium') : 'Free'}</span></td>
-                    <td><span class="admin-badge ${u.isAdmin ? 'on' : 'off'}">${u.isAdmin ? 'Admin' : 'Member'}</span></td>
-                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
-                    <td>
-                        <div class="admin-row-actions">
-                            <button onclick="adminToggleUserField(${u.id}, 'verified', ${!u.verified})">${u.verified ? 'Unverify' : 'Verify'}</button>
-                            <button onclick="adminToggleUserField(${u.id}, 'isPremium', ${!u.isPremium})">${u.isPremium ? 'Remove Premium' : 'Grant Premium'}</button>
-                            <button onclick="adminToggleUserField(${u.id}, 'isAdmin', ${!u.isAdmin})">${u.isAdmin ? 'Remove Admin' : 'Make Admin'}</button>
-                            <button onclick="adminToggleUserField(${u.id}, 'banned', ${!u.banned})">${u.banned ? 'Unsuspend' : 'Suspend'}</button>
-                            <button class="danger" onclick="adminDeleteUser(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}')">Delete</button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
-        }
-
-        async function adminToggleUserField(id, field, value) {
-            try {
-                await apiFetch(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
-                showToast("User Updated", "Changes saved.", "fa-circle-check");
-                loadAdminUsers(adminUsersState.page);
-                loadAdminOverview();
-            } catch (err) {
-                showToast("Couldn't Update User", err.message, "fa-triangle-exclamation");
-            }
-        }
-
-        async function adminDeleteUser(id, name) {
-            if (!confirm(`Permanently delete ${name}'s account, matches, and messages? This cannot be undone.`)) return;
-            try {
-                await apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
-                showToast("User Deleted", `${name}'s account was removed.`, "fa-circle-check");
-                loadAdminUsers(adminUsersState.page);
-                loadAdminOverview();
-            } catch (err) {
-                showToast("Couldn't Delete User", err.message, "fa-triangle-exclamation");
-            }
-        }
-
-        /* ---- Shared pagination helper (used by Users + Matches tabs) ---- */
-        function renderAdminPagination(containerId, pagerState, loadFn) {
-            const container = document.getElementById(containerId);
-            const totalPages = Math.max(1, Math.ceil(pagerState.total / pagerState.pageSize));
-            if (totalPages <= 1) { container.innerHTML = ""; return; }
-            container.innerHTML = `
-                <button class="btn btn-secondary" ${pagerState.page <= 1 ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page - 1})">Prev</button>
-                <span style="color:var(--text-muted); font-size:0.85rem;">Page ${pagerState.page} of ${totalPages}</span>
-                <button class="btn btn-secondary" ${pagerState.page >= totalPages ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page + 1})">Next</button>
-            `;
-        }
-
-        /* ---- Homepage Content ---- */
-        const SITE_IMAGE_SLOTS = [
-            { key: 'heroImage1', label: 'Hero Photo 1', fallback: 'https://picsum.photos/id/64/400/600' },
-            { key: 'heroImage2', label: 'Hero Photo 2', fallback: 'https://picsum.photos/id/91/400/600' },
-            { key: 'galleryImage1', label: 'Gallery Photo 1', fallback: 'https://picsum.photos/id/1027/500/625' },
-            { key: 'galleryImage2', label: 'Gallery Photo 2', fallback: 'https://picsum.photos/id/1074/500/625' },
-            { key: 'galleryImage3', label: 'Gallery Photo 3', fallback: 'https://picsum.photos/id/1062/500/625' },
-            { key: 'safetyImage', label: 'Safety Section Photo', fallback: 'https://picsum.photos/id/367/500/350' }
-        ];
-        let adminSiteSettings = {};
-
-        async function loadAdminSiteSettingsForm() {
-            try {
-                const settings = await apiFetch('/api/site-settings');
-                adminSiteSettings = settings;
-                document.getElementById('admin-hero-title').value = settings.heroTitle || '';
-                document.getElementById('admin-hero-subtitle').value = settings.heroSubtitle || '';
-                renderAdminSiteImageGrid();
-            } catch (err) {
-                showToast("Couldn't Load Homepage Content", err.message, "fa-triangle-exclamation");
-            }
-        }
-
-        function renderAdminSiteImageGrid() {
-            const grid = document.getElementById('adminSiteImageGrid');
-            grid.innerHTML = SITE_IMAGE_SLOTS.map(slot => `
-                <div class="site-image-slot">
-                    <label>${slot.label}</label>
-                    <img src="${adminSiteSettings[slot.key] || slot.fallback}" alt="${slot.label}">
-                    <input type="file" accept="image/*" id="site-file-${slot.key}" style="display:none;" onchange="handleSiteImageSelect('${slot.key}', event)">
-                    <button class="btn btn-secondary" style="width:100%; margin-bottom:6px;" onclick="document.getElementById('site-file-${slot.key}').click()"><i class="fa-solid fa-upload"></i> Replace</button>
-                    ${adminSiteSettings[slot.key] ? `<button class="btn" style="width:100%; background:var(--bg-el);" onclick="resetSiteImage('${slot.key}')">Reset to Default</button>` : ''}
-                </div>
-            `).join('');
-        }
-
-        function handleSiteImageSelect(slotKey, event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            if (file.size > 8 * 1024 * 1024) {
-                showToast("Photo Too Large", "Please choose an image under 8MB.", "fa-triangle-exclamation");
-                return;
-            }
-            const reader = new FileReader();
-            reader.onload = async () => {
-                try {
-                    const { settings } = await apiFetch('/api/admin/site-settings', {
-                        method: 'PUT',
-                        body: JSON.stringify({ [slotKey]: reader.result })
-                    });
-                    adminSiteSettings = {
-                        heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle,
-                        heroImage1: settings.hero_image_1, heroImage2: settings.hero_image_2,
-                        galleryImage1: settings.gallery_image_1, galleryImage2: settings.gallery_image_2,
-                        galleryImage3: settings.gallery_image_3, safetyImage: settings.safety_image
-                    };
-                    renderAdminSiteImageGrid();
-                    applySiteSettings(adminSiteSettings);
-                    showToast("Photo Updated", "The homepage now shows your new photo.", "fa-camera");
-                } catch (err) {
-                    showToast("Upload Failed", err.message, "fa-triangle-exclamation");
-                }
-            };
-            reader.readAsDataURL(file);
-            event.target.value = "";
-        }
-
-        async function resetSiteImage(slotKey) {
-            try {
-                const { settings } = await apiFetch('/api/admin/site-settings', {
-                    method: 'PUT',
-                    body: JSON.stringify({ [slotKey]: null })
-                });
-                adminSiteSettings = {
-                    heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle,
-                    heroImage1: settings.hero_image_1, heroImage2: settings.hero_image_2,
-                    galleryImage1: settings.gallery_image_1, galleryImage2: settings.gallery_image_2,
-                    galleryImage3: settings.gallery_image_3, safetyImage: settings.safety_image
-                };
-                renderAdminSiteImageGrid();
-                const slot = SITE_IMAGE_SLOTS.find(s => s.key === slotKey);
-                const el = document.getElementById({
-                    heroImage1: 'site-img-hero1', heroImage2: 'site-img-hero2',
-                    galleryImage1: 'site-img-gallery1', galleryImage2: 'site-img-gallery2',
-                    galleryImage3: 'site-img-gallery3', safetyImage: 'site-img-safety'
-                }[slotKey]);
-                if (el && slot) el.src = slot.fallback;
-                showToast("Reset", "That photo is back to the default.", "fa-rotate-left");
-            } catch (err) {
-                showToast("Couldn't Reset Photo", err.message, "fa-triangle-exclamation");
-            }
-        }
-
-        async function saveAdminHeroCopy() {
-            try {
-                const heroTitle = document.getElementById('admin-hero-title').value.trim();
-                const heroSubtitle = document.getElementById('admin-hero-subtitle').value.trim();
-                const { settings } = await apiFetch('/api/admin/site-settings', {
-                    method: 'PUT',
-                    body: JSON.stringify({ heroTitle: heroTitle || null, heroSubtitle: heroSubtitle || null })
-                });
-                applySiteSettings({ heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle });
-                if (!settings.hero_title) document.getElementById('site-hero-title').innerText = "Find the connection you've been searching for";
-                if (!settings.hero_subtitle) document.getElementById('site-hero-subtitle').innerText = "HeartSync uses intentional matching algorithms based on structural core personality traits, life values, and deep interests. No endless superficial swiping.";
-                showToast("Homepage Updated", "Headline changes are now live.", "fa-circle-check");
-            } catch (err) {
-                showToast("Couldn't Save", err.message, "fa-triangle-exclamation");
-            }
-        }
-
-        /* ---- Matches ---- */
-        let adminMatchesState = { page: 1, total: 0, pageSize: 25 };
-
-        async function loadAdminMatches(page) {
-            const tbody = document.getElementById('adminMatchesTableBody');
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading matches…</td></tr>`;
-            try {
-                const data = await apiFetch(`/api/admin/matches?page=${page}`);
-                adminMatchesState = { page: data.page, total: data.total, pageSize: data.pageSize };
-                if (data.matches.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No matches yet.</td></tr>`;
-                } else {
-                    tbody.innerHTML = data.matches.map(m => `
-                        <tr>
-                            <td>${escapeHtml(m.user1.name)}<br><span style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(m.user1.email)}</span></td>
-                            <td>${escapeHtml(m.user2.name)}<br><span style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(m.user2.email)}</span></td>
-                            <td>${m.messageCount}</td>
-                            <td>${new Date(m.createdAt).toLocaleDateString()}</td>
-                            <td><div class="admin-row-actions"><button class="danger" onclick="adminDeleteMatch(${m.id})">Delete</button></div></td>
-                        </tr>
-                    `).join('');
-                }
-                renderAdminPagination('adminMatchesPagination', adminMatchesState, loadAdminMatches);
-            } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--primary);">${escapeHtml(err.message)}</td></tr>`;
-            }
-        }
-
-        async function adminDeleteMatch(id) {
-            if (!confirm("Delete this match and its message history? This cannot be undone.")) return;
-            try {
-                await apiFetch(`/api/admin/matches/${id}`, { method: 'DELETE' });
-                showToast("Match Deleted", "The match was removed.", "fa-circle-check");
-                loadAdminMatches(adminMatchesState.page);
-                loadAdminOverview();
-            } catch (err) {
-                showToast("Couldn't Delete Match", err.message, "fa-triangle-exclamation");
-            }
         }
 
         /* ---------------- PREMIUM (real Stripe checkout, opt-in) ---------------- */
@@ -3639,6 +3336,160 @@
             } finally {
                 btn.disabled = false;
                 btn.innerText = originalText;
+            }
+        }
+
+        /* ---------------- OTHER PAYMENT METHODS: USSD (Paystack), PayPal (coming soon), Gift Card ---------------- */
+        let pmPaystackPollTimer = null;
+
+        function getSelectedPaymentTier() {
+            const checked = document.querySelector('input[name="pm-tier"]:checked');
+            return checked ? checked.value : 'gold';
+        }
+
+        function onPaymentTierChange() {
+            // Reset any in-progress USSD flow when the plan changes.
+            document.getElementById('pm-ussd-result').style.display = "none";
+            document.getElementById('pm-ussd-code').innerText = "";
+            if (pmPaystackPollTimer) { clearInterval(pmPaystackPollTimer); pmPaystackPollTimer = null; }
+        }
+
+        function switchPaymentTab(event, paneId) {
+            document.querySelectorAll('.payment-methods-panel .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
+            document.querySelectorAll('.payment-methods-panel .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
+            event.currentTarget.classList.add('active-settings-tab');
+            document.getElementById(paneId).classList.add('active-pane');
+        }
+
+        async function initPremiumPaymentMethods() {
+            await loadPaystackBanks();
+            await loadMyGiftcards();
+        }
+
+        /* ---- USSD via Paystack ---- */
+        async function loadPaystackBanks() {
+            const select = document.getElementById('pm-ussd-bank');
+            const disabledMsg = document.getElementById('pm-ussd-disabled-msg');
+            const form = document.getElementById('pm-ussd-form');
+            try {
+                const data = await apiFetch('/api/premium/paystack/banks');
+                select.innerHTML = data.banks.map(b => `<option value="${b.code}">${escapeHtml(b.name)}</option>`).join('');
+                if (!data.enabled) {
+                    disabledMsg.innerText = "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now.";
+                    disabledMsg.style.display = "block";
+                    form.style.display = "none";
+                } else {
+                    disabledMsg.style.display = "none";
+                    form.style.display = "block";
+                }
+            } catch (err) {
+                disabledMsg.innerText = "Couldn't load USSD payment options right now.";
+                disabledMsg.style.display = "block";
+                form.style.display = "none";
+            }
+        }
+
+        async function startUssdPayment() {
+            const btn = document.getElementById('pm-ussd-btn');
+            const bankCode = document.getElementById('pm-ussd-bank').value;
+            const tier = getSelectedPaymentTier();
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Requesting Code...";
+            try {
+                const data = await apiFetch('/api/premium/paystack/ussd/initiate', {
+                    method: 'POST',
+                    body: JSON.stringify({ tier, bankCode })
+                });
+                document.getElementById('pm-ussd-code').innerText = data.ussdCode || "Check your phone";
+                document.getElementById('pm-ussd-status').innerText = data.displayText || "Waiting for payment confirmation…";
+                document.getElementById('pm-ussd-result').style.display = "block";
+                pollPaystackVerification(data.reference);
+            } catch (err) {
+                showToast("USSD Payment Unavailable", err.message, "fa-triangle-exclamation");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        function pollPaystackVerification(reference) {
+            if (pmPaystackPollTimer) clearInterval(pmPaystackPollTimer);
+            const statusEl = document.getElementById('pm-ussd-status');
+            pmPaystackPollTimer = setInterval(async () => {
+                try {
+                    const data = await apiFetch(`/api/premium/paystack/verify/${encodeURIComponent(reference)}`);
+                    if (data.status === 'success') {
+                        clearInterval(pmPaystackPollTimer);
+                        pmPaystackPollTimer = null;
+                        statusEl.innerText = "Payment confirmed! Your account is now Premium.";
+                        if (state.user) state.user.isPremium = true;
+                        showToast("Payment Successful", "Your Premium plan is now active.", "fa-circle-check");
+                    } else if (data.status === 'failed') {
+                        clearInterval(pmPaystackPollTimer);
+                        pmPaystackPollTimer = null;
+                        statusEl.innerText = "That payment failed or was cancelled. You can try again.";
+                    } else {
+                        statusEl.innerText = "Waiting for payment confirmation…";
+                    }
+                } catch (err) {
+                    // Keep polling quietly; a transient network error shouldn't stop the flow.
+                }
+            }, 4000);
+        }
+
+        /* ---- PayPal (coming soon) ---- */
+        // No action wired up on purpose — the button stays disabled and the
+        // backend endpoint (/api/premium/paypal/checkout) always reports 501
+        // "coming soon" if it's ever called.
+
+        /* ---- Gift Card ---- */
+        async function submitGiftcard() {
+            const btn = document.getElementById('pm-giftcard-btn');
+            const input = document.getElementById('pm-giftcard-code');
+            const code = input.value.trim();
+            const tier = getSelectedPaymentTier();
+            if (!code) {
+                showToast("Missing Code", "Please enter your gift card ID/code.", "fa-triangle-exclamation");
+                return;
+            }
+            btn.disabled = true;
+            const originalText = btn.innerText;
+            btn.innerText = "Submitting...";
+            try {
+                await apiFetch('/api/premium/giftcard/redeem', { method: 'POST', body: JSON.stringify({ tier, code }) });
+                input.value = "";
+                showToast("Gift Card Submitted", "An admin will review it shortly. You'll see the status below.", "fa-circle-check");
+                loadMyGiftcards();
+            } catch (err) {
+                showToast("Couldn't Submit Gift Card", err.message, "fa-triangle-exclamation");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = originalText;
+            }
+        }
+
+        async function loadMyGiftcards() {
+            const list = document.getElementById('pm-giftcard-list');
+            try {
+                const data = await apiFetch('/api/premium/giftcard/mine');
+                if (data.redemptions.length === 0) {
+                    list.innerHTML = `<p style="color:var(--text-muted); font-size:0.85rem;">You haven't submitted any gift cards yet.</p>`;
+                    return;
+                }
+                const badgeClass = { pending: 'off', approved: 'on', rejected: 'danger' };
+                list.innerHTML = data.redemptions.map(r => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 14px; border:1px solid var(--border); border-radius:8px;">
+                        <div>
+                            <div style="font-weight:600;">${escapeHtml(r.code)}</div>
+                            <div style="font-size:0.78rem; color:var(--text-muted);">${r.tier.charAt(0).toUpperCase() + r.tier.slice(1)} · Submitted ${new Date(r.createdAt).toLocaleDateString()}</div>
+                            ${r.adminNote ? `<div style="font-size:0.78rem; color:var(--text-muted); margin-top:2px;">Note: ${escapeHtml(r.adminNote)}</div>` : ''}
+                        </div>
+                        <span class="admin-badge ${badgeClass[r.status] || 'off'}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                list.innerHTML = `<p style="color:var(--primary); font-size:0.85rem;">Couldn't load your gift card submissions.</p>`;
             }
         }
 

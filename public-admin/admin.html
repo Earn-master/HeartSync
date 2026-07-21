@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HeartSync — Admin Console</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    :root {
+        --bg: #0b0e14;
+        --panel: #12161f;
+        --panel-2: #171c27;
+        --border: #232a3a;
+        --text: #e9edf5;
+        --muted: #7c869b;
+        --accent: #e8b64c;
+        --accent-dim: rgba(232, 182, 76, 0.14);
+        --success: #4ad9a0;
+        --success-dim: rgba(74, 217, 160, 0.14);
+        --danger: #f26d6d;
+        --danger-dim: rgba(242, 109, 109, 0.14);
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; }
+    h1, h2, h3, .display { font-family: 'Space Grotesk', sans-serif; }
+    .mono { font-family: 'JetBrains Mono', monospace; }
+    a { color: inherit; }
+    button { font-family: inherit; }
+    input, select, textarea {
+        font-family: inherit; background: var(--bg); color: var(--text);
+        border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 0.92rem; width: 100%;
+    }
+    input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+    label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.02em; text-transform: uppercase; }
+    .field { margin-bottom: 16px; }
+
+    .btn {
+        display: inline-flex; align-items: center; gap: 8px; justify-content: center;
+        border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
+        padding: 10px 16px; border-radius: 8px; cursor: pointer; font-size: 0.88rem; font-weight: 500;
+        transition: all 0.15s ease;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-accent { background: var(--accent); color: #1a1305; border-color: var(--accent); font-weight: 600; }
+    .btn-accent:hover { filter: brightness(1.08); }
+    .btn-danger { color: var(--danger); }
+    .btn-danger:hover { border-color: var(--danger); }
+    .btn-sm { padding: 6px 10px; font-size: 0.78rem; }
+
+    /* ---------------- LOGIN ---------------- */
+    #view-login {
+        min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;
+        background:
+            radial-gradient(circle at 20% 20%, rgba(232,182,76,0.06), transparent 40%),
+            radial-gradient(circle at 80% 80%, rgba(74,217,160,0.05), transparent 40%),
+            var(--bg);
+    }
+    .login-card {
+        width: 100%; max-width: 380px; background: var(--panel); border: 1px solid var(--border);
+        border-radius: 14px; padding: 36px 32px;
+    }
+    .login-brand { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+    .login-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .login-brand span { font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); }
+    .login-card h1 { font-size: 1.5rem; margin: 10px 0 4px; }
+    .login-card p.sub { color: var(--muted); font-size: 0.85rem; margin: 0 0 26px; }
+    .login-error {
+        display: none; background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(242,109,109,0.3);
+        padding: 10px 12px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 16px;
+    }
+
+    /* ---------------- SHELL ---------------- */
+    #view-app { display: none; min-height: 100vh; }
+    .shell { display: grid; grid-template-columns: 232px 1fr; min-height: 100vh; }
+    .sidebar { background: var(--panel); border-right: 1px solid var(--border); padding: 22px 16px; display: flex; flex-direction: column; }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 20px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+    .sidebar-brand .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .sidebar-brand strong { font-family: 'Space Grotesk'; font-size: 0.95rem; }
+    .sidebar-brand span { display: block; font-size: 0.68rem; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; }
+    .nav-item {
+        display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; cursor: pointer;
+        color: var(--muted); font-size: 0.88rem; margin-bottom: 2px;
+    }
+    .nav-item i { width: 16px; text-align: center; }
+    .nav-item:hover { background: var(--panel-2); color: var(--text); }
+    .nav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+    .sidebar-footer { margin-top: auto; padding-top: 16px; border-top: 1px solid var(--border); }
+    .sidebar-admin-name { font-size: 0.82rem; color: var(--text); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+    .sidebar-admin-name i { color: var(--muted); }
+
+    .main { padding: 30px 40px; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 12px; }
+    .page-head h2 { margin: 0 0 4px; font-size: 1.4rem; }
+    .page-head p { margin: 0; color: var(--muted); font-size: 0.86rem; }
+
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 8px; }
+    .stat-card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .stat-card strong { display: block; font-family: 'JetBrains Mono'; font-size: 1.7rem; color: var(--accent); }
+    .stat-card span { font-size: 0.78rem; color: var(--muted); }
+
+    .panel { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px; margin-bottom: 20px; }
+    .panel h3 { margin: 0 0 4px; font-size: 1.02rem; }
+    .panel .panel-sub { color: var(--muted); font-size: 0.82rem; margin: 0 0 18px; }
+
+    .toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .toolbar input { max-width: 260px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.86rem; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    th { color: var(--muted); font-weight: 500; font-size: 0.76rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    tr:last-child td { border-bottom: none; }
+    .table-wrap { overflow-x: auto; }
+
+    .badge {
+        display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.02em;
+    }
+    .badge.on { background: var(--success-dim); color: var(--success); }
+    .badge.off { background: var(--panel-2); color: var(--muted); }
+    .badge.danger { background: var(--danger-dim); color: var(--danger); }
+
+    .row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+    .row-actions button {
+        background: transparent; border: 1px solid var(--border); color: var(--muted); border-radius: 6px;
+        padding: 5px 9px; font-size: 0.74rem; cursor: pointer;
+    }
+    .row-actions button:hover { border-color: var(--accent); color: var(--text); }
+    .row-actions button.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+    .pager { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 14px; }
+    .pager span { font-size: 0.8rem; color: var(--muted); }
+
+    .status-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .status-tabs button {
+        background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+        padding: 7px 14px; border-radius: 999px; font-size: 0.8rem; cursor: pointer;
+    }
+    .status-tabs button.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+
+    .img-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+    .img-slot { border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+    .img-slot img { width: 100%; height: 110px; object-fit: cover; border-radius: 8px; margin-bottom: 8px; background: var(--bg); }
+    .img-slot label { text-align: left; }
+
+    .empty-note { color: var(--muted); font-size: 0.85rem; text-align: center; padding: 24px 0; }
+
+    .toast-stack { position: fixed; top: 20px; right: 20px; z-index: 999; display: flex; flex-direction: column; gap: 10px; }
+    .toast { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 12px 16px; min-width: 260px; font-size: 0.85rem; }
+    .toast.error { border-left-color: var(--danger); }
+    .toast strong { display: block; margin-bottom: 2px; }
+
+    @media (max-width: 780px) {
+        .shell { grid-template-columns: 1fr; }
+        .sidebar { display: flex; flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 12px; }
+        .sidebar-brand, .sidebar-footer { display: none; }
+        .nav-item { white-space: nowrap; }
+        .main { padding: 20px; }
+    }
+</style>
+</head>
+<body>
+
+<div class="toast-stack" id="toastStack"></div>
+
+<!-- ===================== LOGIN (username + password only — no email) ===================== -->
+<section id="view-login">
+    <div class="login-card">
+        <div class="login-brand"><span class="dot"></span><span>HeartSync</span></div>
+        <h1>Admin Console</h1>
+        <p class="sub">Staff access only. Sign in with your admin username and password.</p>
+        <div class="login-error" id="loginError"></div>
+        <form onsubmit="handleAdminLogin(event)">
+            <div class="field">
+                <label>Username</label>
+                <input type="text" id="login-username" autocomplete="username" required>
+            </div>
+            <div class="field">
+                <label>Password</label>
+                <input type="password" id="login-password" autocomplete="current-password" required>
+            </div>
+            <button type="submit" class="btn btn-accent" style="width:100%;" id="loginSubmitBtn">
+                <i class="fa-solid fa-right-to-bracket"></i> Sign In
+            </button>
+        </form>
+    </div>
+</section>
+
+<!-- ===================== APP SHELL ===================== -->
+<section id="view-app">
+    <div class="shell">
+        <div class="sidebar">
+            <div class="sidebar-brand">
+                <span class="dot"></span>
+                <div><strong>HeartSync</strong><span>Admin Console</span></div>
+            </div>
+            <div class="nav-item active" data-page="overview" onclick="showPage('overview')"><i class="fa-solid fa-chart-line"></i> Overview</div>
+            <div class="nav-item" data-page="users" onclick="showPage('users')"><i class="fa-solid fa-users"></i> Users</div>
+            <div class="nav-item" data-page="matches" onclick="showPage('matches')"><i class="fa-solid fa-heart"></i> Matches</div>
+            <div class="nav-item" data-page="giftcards" onclick="showPage('giftcards')"><i class="fa-solid fa-gift"></i> Gift Cards</div>
+            <div class="nav-item" data-page="content" onclick="showPage('content')"><i class="fa-solid fa-image"></i> Homepage Content</div>
+            <div class="nav-item" data-page="admins" onclick="showPage('admins')"><i class="fa-solid fa-user-shield"></i> Admin Accounts</div>
+            <div class="nav-item" data-page="account" onclick="showPage('account')"><i class="fa-solid fa-key"></i> My Account</div>
+            <div class="sidebar-footer">
+                <div class="sidebar-admin-name"><i class="fa-solid fa-circle-user"></i> <span id="currentAdminName">—</span></div>
+                <button class="btn btn-sm" style="width:100%;" onclick="adminLogout()"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</button>
+            </div>
+        </div>
+
+        <div class="main">
+            <!-- ---- Overview ---- -->
+            <div class="page active" id="page-overview">
+                <div class="page-head">
+                    <div><h2>Overview</h2><p>A snapshot of the whole platform.</p></div>
+                    <button class="btn" onclick="loadOverview()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                </div>
+                <div class="stat-grid" id="overviewGrid">
+                    <div class="stat-card"><strong>—</strong><span>Loading…</span></div>
+                </div>
+            </div>
+
+            <!-- ---- Users ---- -->
+            <div class="page" id="page-users">
+                <div class="page-head"><div><h2>Users</h2><p>Search, verify, grant Premium, suspend, or remove member accounts.</p></div></div>
+                <div class="panel">
+                    <div class="toolbar">
+                        <input type="text" id="userSearch" placeholder="Search by name or email…" onkeypress="if(event.key==='Enter') loadUsers(1)">
+                        <button class="btn btn-accent" onclick="loadUsers(1)"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Premium</th><th>Role</th><th>Joined</th><th>Actions</th></tr></thead>
+                            <tbody id="usersTableBody"><tr><td colspan="7" class="empty-note">Loading users…</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="pager" id="usersPager"></div>
+                </div>
+            </div>
+
+            <!-- ---- Matches ---- -->
+            <div class="page" id="page-matches">
+                <div class="page-head"><div><h2>Matches</h2><p>All mutual matches formed on the platform.</p></div></div>
+                <div class="panel">
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Member 1</th><th>Member 2</th><th>Messages</th><th>Matched</th><th>Actions</th></tr></thead>
+                            <tbody id="matchesTableBody"><tr><td colspan="5" class="empty-note">Loading matches…</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="pager" id="matchesPager"></div>
+                </div>
+            </div>
+
+            <!-- ---- Gift Cards ---- -->
+            <div class="page" id="page-giftcards">
+                <div class="page-head"><div><h2>Gift Card Redemptions</h2><p>Members submit a gift card ID/code only — verify it out-of-band, then approve or reject here.</p></div></div>
+                <div class="panel">
+                    <div class="status-tabs" id="giftcardStatusTabs">
+                        <button class="active" data-status="pending" onclick="switchGiftcardStatus('pending')">Pending</button>
+                        <button data-status="approved" onclick="switchGiftcardStatus('approved')">Approved</button>
+                        <button data-status="rejected" onclick="switchGiftcardStatus('rejected')">Rejected</button>
+                        <button data-status="" onclick="switchGiftcardStatus('')">All</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Code</th><th>Plan</th><th>Member</th><th>Submitted</th><th>Status</th><th>Actions</th></tr></thead>
+                            <tbody id="giftcardsTableBody"><tr><td colspan="6" class="empty-note">Loading…</td></tr></tbody>
+                        </table>
+                    </div>
+                    <div class="pager" id="giftcardsPager"></div>
+                </div>
+            </div>
+
+            <!-- ---- Homepage Content ---- -->
+            <div class="page" id="page-content">
+                <div class="page-head"><div><h2>Homepage Content</h2><p>Replace the headline and stock photos shown to every visitor.</p></div></div>
+                <div class="panel">
+                    <h3>Hero Copy</h3>
+                    <p class="panel-sub">Shown at the top of the public homepage.</p>
+                    <div class="field"><label>Hero Headline</label><input type="text" id="content-hero-title" placeholder="Find the connection you've been searching for"></div>
+                    <div class="field"><label>Hero Subheadline</label><textarea id="content-hero-subtitle" rows="2" placeholder="HeartSync uses intentional matching algorithms…"></textarea></div>
+                    <button class="btn btn-accent" onclick="saveHeroCopy()"><i class="fa-solid fa-floppy-disk"></i> Save Headline</button>
+                </div>
+                <div class="panel">
+                    <h3>Homepage Photos</h3>
+                    <p class="panel-sub">Click a photo to replace it (JPG/PNG, under 8MB). Changes go live immediately.</p>
+                    <div class="img-grid" id="siteImageGrid"></div>
+                </div>
+            </div>
+
+            <!-- ---- Admin Accounts ---- -->
+            <div class="page" id="page-admins">
+                <div class="page-head"><div><h2>Admin Accounts</h2><p>Other staff accounts with access to this console. Username + password only — no email involved.</p></div></div>
+                <div class="panel">
+                    <h3>Add Admin</h3>
+                    <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
+                        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><label>Username</label><input type="text" id="newAdminUsername"></div>
+                        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><label>Password</label><input type="password" id="newAdminPassword"></div>
+                        <button class="btn btn-accent" onclick="createAdmin()"><i class="fa-solid fa-user-plus"></i> Create Admin</button>
+                    </div>
+                </div>
+                <div class="panel">
+                    <h3>Existing Admins</h3>
+                    <div class="table-wrap">
+                        <table>
+                            <thead><tr><th>Username</th><th>Created</th><th>Actions</th></tr></thead>
+                            <tbody id="adminsTableBody"><tr><td colspan="3" class="empty-note">Loading…</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ---- My Account ---- -->
+            <div class="page" id="page-account">
+                <div class="page-head"><div><h2>My Account</h2><p>Update your own admin password.</p></div></div>
+                <div class="panel" style="max-width:420px;">
+                    <div class="field"><label>Current Password</label><input type="password" id="acct-current-password"></div>
+                    <div class="field"><label>New Password</label><input type="password" id="acct-new-password"></div>
+                    <button class="btn btn-accent" onclick="changeMyPassword()"><i class="fa-solid fa-key"></i> Update Password</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    const API = ''; // same-origin
+    const ADMIN_TOKEN_KEY = 'heartsync_admin_token'; // deliberately separate from the member site's token key
+    let currentAdmin = null;
+
+    function getToken() { return localStorage.getItem(ADMIN_TOKEN_KEY); }
+    function setToken(t) { localStorage.setItem(ADMIN_TOKEN_KEY, t); }
+    function clearToken() { localStorage.removeItem(ADMIN_TOKEN_KEY); }
+
+    function escapeHtml(str) {
+        const div = document.createElement('div');
+        div.innerText = str == null ? '' : String(str);
+        return div.innerHTML;
+    }
+
+    async function apiFetch(path, options = {}) {
+        const headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+        const token = getToken();
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const res = await fetch(API + path, Object.assign({}, options, { headers }));
+        let data = {};
+        try { data = await res.json(); } catch (e) { /* no body */ }
+        if (!res.ok) {
+            const err = new Error(data.error || 'Something went wrong.');
+            err.status = res.status;
+            throw err;
+        }
+        return data;
+    }
+
+    function showToast(title, message, isError) {
+        const stack = document.getElementById('toastStack');
+        const toast = document.createElement('div');
+        toast.className = 'toast' + (isError ? ' error' : '');
+        toast.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
+        stack.appendChild(toast);
+        setTimeout(() => toast.remove(), 5000);
+    }
+
+    /* ---------------- BOOTSTRAP ---------------- */
+    document.addEventListener('DOMContentLoaded', async () => {
+        const token = getToken();
+        if (token) {
+            try {
+                const { admin } = await apiFetch('/api/admin-auth/me');
+                enterApp(admin);
+            } catch (err) {
+                clearToken();
+            }
+        }
+    });
+
+    function enterApp(admin) {
+        currentAdmin = admin;
+        document.getElementById('currentAdminName').innerText = admin.username;
+        document.getElementById('view-login').style.display = 'none';
+        document.getElementById('view-app').style.display = 'block';
+        showPage('overview');
+    }
+
+    /* ---------------- LOGIN / LOGOUT ---------------- */
+    async function handleAdminLogin(event) {
+        event.preventDefault();
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        const errorEl = document.getElementById('loginError');
+        const btn = document.getElementById('loginSubmitBtn');
+        errorEl.style.display = 'none';
+        btn.disabled = true;
+        try {
+            const data = await apiFetch('/api/admin-auth/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+            setToken(data.token);
+            enterApp(data.admin);
+        } catch (err) {
+            errorEl.innerText = err.message;
+            errorEl.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    function adminLogout() {
+        clearToken();
+        currentAdmin = null;
+        document.getElementById('view-app').style.display = 'none';
+        document.getElementById('view-login').style.display = 'flex';
+        document.getElementById('login-username').value = '';
+        document.getElementById('login-password').value = '';
+    }
+
+    /* ---------------- ROUTER ---------------- */
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(`page-${pageId}`).classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === pageId));
+
+        if (pageId === 'overview') loadOverview();
+        if (pageId === 'users') loadUsers(1);
+        if (pageId === 'matches') loadMatches(1);
+        if (pageId === 'giftcards') loadGiftcards(1);
+        if (pageId === 'content') loadSiteSettingsForm();
+        if (pageId === 'admins') loadAdmins();
+    }
+
+    /* ---------------- OVERVIEW ---------------- */
+    async function loadOverview() {
+        const grid = document.getElementById('overviewGrid');
+        try {
+            const stats = await apiFetch('/api/admin/overview');
+            const cards = [
+                { label: 'Total Members', value: stats.totalUsers },
+                { label: 'Verified', value: stats.verifiedUsers },
+                { label: 'Premium', value: stats.premiumUsers },
+                { label: 'Admins', value: stats.adminUsers },
+                { label: 'Suspended', value: stats.bannedUsers },
+                { label: 'Total Matches', value: stats.totalMatches },
+                { label: 'Messages Sent', value: stats.totalMessages },
+                { label: 'New (7 days)', value: stats.newUsersLast7Days },
+                { label: 'Pending Gift Cards', value: stats.pendingGiftcards }
+            ];
+            grid.innerHTML = cards.map(c => `<div class="stat-card"><strong>${c.value}</strong><span>${c.label}</span></div>`).join('');
+        } catch (err) {
+            grid.innerHTML = `<div class="stat-card"><span>Couldn't load overview: ${escapeHtml(err.message)}</span></div>`;
+        }
+    }
+
+    /* ---------------- USERS ---------------- */
+    let usersState = { page: 1, total: 0, pageSize: 25 };
+
+    async function loadUsers(page) {
+        const tbody = document.getElementById('usersTableBody');
+        tbody.innerHTML = `<tr><td colspan="7" class="empty-note">Loading users…</td></tr>`;
+        try {
+            const search = document.getElementById('userSearch').value.trim();
+            const query = search ? `?search=${encodeURIComponent(search)}&page=${page}` : `?page=${page}`;
+            const data = await apiFetch(`/api/admin/users${query}`);
+            usersState = { page: data.page, total: data.total, pageSize: data.pageSize };
+            renderUsersTable(data.users);
+            renderPager('usersPager', usersState, loadUsers);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-note">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    function renderUsersTable(users) {
+        const tbody = document.getElementById('usersTableBody');
+        if (users.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="empty-note">No users found.</td></tr>`;
+            return;
+        }
+        tbody.innerHTML = users.map(u => `
+            <tr>
+                <td>${escapeHtml(u.name)}</td>
+                <td>${escapeHtml(u.email)}</td>
+                <td>
+                    <span class="badge ${u.verified ? 'on' : 'off'}">${u.verified ? 'Verified' : 'Unverified'}</span>
+                    ${u.banned ? '<span class="badge danger">Suspended</span>' : ''}
+                </td>
+                <td><span class="badge ${u.isPremium ? 'on' : 'off'}">${u.isPremium ? (u.premiumTier || 'Premium') : 'Free'}</span></td>
+                <td><span class="badge ${u.isAdmin ? 'on' : 'off'}">${u.isAdmin ? 'Admin Flag' : 'Member'}</span></td>
+                <td class="mono" style="font-size:0.78rem;">${new Date(u.createdAt).toLocaleDateString()}</td>
+                <td>
+                    <div class="row-actions">
+                        <button onclick="toggleUserField(${u.id}, 'verified', ${!u.verified})">${u.verified ? 'Unverify' : 'Verify'}</button>
+                        <button onclick="toggleUserField(${u.id}, 'isPremium', ${!u.isPremium})">${u.isPremium ? 'Remove Premium' : 'Grant Premium'}</button>
+                        <button onclick="toggleUserField(${u.id}, 'banned', ${!u.banned})">${u.banned ? 'Unsuspend' : 'Suspend'}</button>
+                        <button class="danger" onclick="deleteUser(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}')">Delete</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
+    }
+
+    async function toggleUserField(id, field, value) {
+        try {
+            await apiFetch(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
+            showToast('User Updated', 'Changes saved.');
+            loadUsers(usersState.page);
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Update User", err.message, true);
+        }
+    }
+
+    async function deleteUser(id, name) {
+        if (!confirm(`Permanently delete ${name}'s account, matches, and messages? This cannot be undone.`)) return;
+        try {
+            await apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+            showToast('User Deleted', `${name}'s account was removed.`);
+            loadUsers(usersState.page);
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Delete User", err.message, true);
+        }
+    }
+
+    /* ---------------- MATCHES ---------------- */
+    let matchesState = { page: 1, total: 0, pageSize: 25 };
+
+    async function loadMatches(page) {
+        const tbody = document.getElementById('matchesTableBody');
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-note">Loading matches…</td></tr>`;
+        try {
+            const data = await apiFetch(`/api/admin/matches?page=${page}`);
+            matchesState = { page: data.page, total: data.total, pageSize: data.pageSize };
+            if (data.matches.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="empty-note">No matches yet.</td></tr>`;
+            } else {
+                tbody.innerHTML = data.matches.map(m => `
+                    <tr>
+                        <td>${escapeHtml(m.user1.name)}<br><span style="color:var(--muted); font-size:0.78rem;">${escapeHtml(m.user1.email)}</span></td>
+                        <td>${escapeHtml(m.user2.name)}<br><span style="color:var(--muted); font-size:0.78rem;">${escapeHtml(m.user2.email)}</span></td>
+                        <td>${m.messageCount}</td>
+                        <td class="mono" style="font-size:0.78rem;">${new Date(m.createdAt).toLocaleDateString()}</td>
+                        <td><div class="row-actions"><button class="danger" onclick="deleteMatch(${m.id})">Delete</button></div></td>
+                    </tr>
+                `).join('');
+            }
+            renderPager('matchesPager', matchesState, loadMatches);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="5" class="empty-note">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    async function deleteMatch(id) {
+        if (!confirm('Delete this match and its message history? This cannot be undone.')) return;
+        try {
+            await apiFetch(`/api/admin/matches/${id}`, { method: 'DELETE' });
+            showToast('Match Deleted', 'The match was removed.');
+            loadMatches(matchesState.page);
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Delete Match", err.message, true);
+        }
+    }
+
+    /* ---------------- GIFT CARDS ---------------- */
+    let giftcardsState = { page: 1, total: 0, pageSize: 25, status: 'pending' };
+
+    function switchGiftcardStatus(status) {
+        giftcardsState.status = status;
+        document.querySelectorAll('#giftcardStatusTabs button').forEach(btn => {
+            btn.classList.toggle('active', btn.dataset.status === status);
+        });
+        loadGiftcards(1);
+    }
+
+    async function loadGiftcards(page) {
+        const tbody = document.getElementById('giftcardsTableBody');
+        tbody.innerHTML = `<tr><td colspan="6" class="empty-note">Loading…</td></tr>`;
+        try {
+            const statusQuery = giftcardsState.status ? `status=${giftcardsState.status}&` : '';
+            const data = await apiFetch(`/api/admin/giftcards?${statusQuery}page=${page}`);
+            giftcardsState = { ...giftcardsState, page: data.page, total: data.total, pageSize: data.pageSize };
+            if (data.redemptions.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="empty-note">No submissions here.</td></tr>`;
+            } else {
+                const badgeClass = { pending: 'off', approved: 'on', rejected: 'danger' };
+                tbody.innerHTML = data.redemptions.map(r => `
+                    <tr>
+                        <td class="mono">${escapeHtml(r.code)}</td>
+                        <td>${r.tier.charAt(0).toUpperCase() + r.tier.slice(1)}</td>
+                        <td>${escapeHtml(r.user.name)}<br><span style="color:var(--muted); font-size:0.78rem;">${escapeHtml(r.user.email)}</span></td>
+                        <td class="mono" style="font-size:0.78rem;">${new Date(r.createdAt).toLocaleDateString()}</td>
+                        <td><span class="badge ${badgeClass[r.status] || 'off'}">${r.status.charAt(0).toUpperCase() + r.status.slice(1)}</span></td>
+                        <td>
+                            ${r.status === 'pending' ? `
+                                <div class="row-actions">
+                                    <button onclick="reviewGiftcard(${r.id}, 'approved')">Approve</button>
+                                    <button class="danger" onclick="reviewGiftcard(${r.id}, 'rejected')">Reject</button>
+                                </div>
+                            ` : `<span style="color:var(--muted); font-size:0.78rem;">${escapeHtml(r.adminNote || 'Reviewed')}</span>`}
+                        </td>
+                    </tr>
+                `).join('');
+            }
+            renderPager('giftcardsPager', giftcardsState, loadGiftcards);
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="6" class="empty-note">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    async function reviewGiftcard(id, status) {
+        const note = prompt(status === 'approved' ? 'Optional note for this approval:' : 'Reason for rejecting (shown to the member):', '') || '';
+        try {
+            await apiFetch(`/api/admin/giftcards/${id}`, { method: 'PUT', body: JSON.stringify({ status, note }) });
+            showToast('Gift Card Reviewed', status === 'approved' ? 'Member has been upgraded to Premium.' : 'Submission rejected.');
+            loadGiftcards(giftcardsState.page);
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Update Submission", err.message, true);
+        }
+    }
+
+    /* ---------------- HOMEPAGE CONTENT ---------------- */
+    let siteSettings = {};
+    const SITE_IMAGE_SLOTS = [
+        { key: 'heroImage1', col: 'hero_image_1', label: 'Hero Photo 1' },
+        { key: 'heroImage2', col: 'hero_image_2', label: 'Hero Photo 2' },
+        { key: 'galleryImage1', col: 'gallery_image_1', label: 'Gallery Photo 1' },
+        { key: 'galleryImage2', col: 'gallery_image_2', label: 'Gallery Photo 2' },
+        { key: 'galleryImage3', col: 'gallery_image_3', label: 'Gallery Photo 3' },
+        { key: 'safetyImage', col: 'safety_image', label: 'Safety Section Photo' }
+    ];
+
+    async function loadSiteSettingsForm() {
+        try {
+            const { settings } = await apiFetch('/api/admin/site-settings');
+            siteSettings = settings || {};
+            document.getElementById('content-hero-title').value = siteSettings.hero_title || '';
+            document.getElementById('content-hero-subtitle').value = siteSettings.hero_subtitle || '';
+            renderSiteImageGrid();
+        } catch (err) {
+            showToast("Couldn't Load Site Settings", err.message, true);
+        }
+    }
+
+    function renderSiteImageGrid() {
+        const grid = document.getElementById('siteImageGrid');
+        grid.innerHTML = SITE_IMAGE_SLOTS.map(slot => `
+            <div class="img-slot">
+                <label>${slot.label}</label>
+                <img src="${siteSettings[slot.col] || 'https://placehold.co/300x180/171c27/7c869b?text=No+Image'}" alt="${slot.label}">
+                <input type="file" accept="image/*" id="file-${slot.key}" style="display:none;" onchange="handleSiteImageSelect('${slot.key}','${slot.col}', event)">
+                <button class="btn btn-sm" style="width:100%; margin-bottom:6px;" onclick="document.getElementById('file-${slot.key}').click()"><i class="fa-solid fa-upload"></i> Replace</button>
+                ${siteSettings[slot.col] ? `<button class="btn btn-sm" style="width:100%;" onclick="resetSiteImage('${slot.key}','${slot.col}')">Reset</button>` : ''}
+            </div>
+        `).join('');
+    }
+
+    function handleSiteImageSelect(slotKey, col, event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (file.size > 8 * 1024 * 1024) {
+            showToast('Photo Too Large', 'Please choose an image under 8MB.', true);
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = async () => {
+            try {
+                const { settings } = await apiFetch('/api/admin/site-settings', { method: 'PUT', body: JSON.stringify({ [slotKey]: reader.result }) });
+                siteSettings = settings;
+                renderSiteImageGrid();
+                showToast('Photo Updated', 'The homepage now shows the new photo.');
+            } catch (err) {
+                showToast('Upload Failed', err.message, true);
+            }
+        };
+        reader.readAsDataURL(file);
+        event.target.value = '';
+    }
+
+    async function resetSiteImage(slotKey, col) {
+        try {
+            const { settings } = await apiFetch('/api/admin/site-settings', { method: 'PUT', body: JSON.stringify({ [slotKey]: null }) });
+            siteSettings = settings;
+            renderSiteImageGrid();
+            showToast('Reset', 'That photo is back to the default.');
+        } catch (err) {
+            showToast("Couldn't Reset Photo", err.message, true);
+        }
+    }
+
+    async function saveHeroCopy() {
+        try {
+            const heroTitle = document.getElementById('content-hero-title').value.trim();
+            const heroSubtitle = document.getElementById('content-hero-subtitle').value.trim();
+            const { settings } = await apiFetch('/api/admin/site-settings', { method: 'PUT', body: JSON.stringify({ heroTitle: heroTitle || null, heroSubtitle: heroSubtitle || null }) });
+            siteSettings = settings;
+            showToast('Homepage Updated', 'Headline changes are now live.');
+        } catch (err) {
+            showToast("Couldn't Save", err.message, true);
+        }
+    }
+
+    /* ---------------- ADMIN ACCOUNTS ---------------- */
+    async function loadAdmins() {
+        const tbody = document.getElementById('adminsTableBody');
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-note">Loading…</td></tr>`;
+        try {
+            const { admins } = await apiFetch('/api/admin-auth/admins');
+            tbody.innerHTML = admins.map(a => `
+                <tr>
+                    <td>${escapeHtml(a.username)} ${a.id === currentAdmin.id ? '<span class="badge on" style="margin-left:6px;">You</span>' : ''}</td>
+                    <td class="mono" style="font-size:0.78rem;">${new Date(a.created_at).toLocaleDateString()}</td>
+                    <td>${a.id === currentAdmin.id ? '<span style="color:var(--muted); font-size:0.78rem;">—</span>' : `<div class="row-actions"><button class="danger" onclick="deleteAdmin(${a.id}, '${escapeHtml(a.username).replace(/'/g, "\\'")}')">Delete</button></div>`}</td>
+                </tr>
+            `).join('');
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="3" class="empty-note">${escapeHtml(err.message)}</td></tr>`;
+        }
+    }
+
+    async function createAdmin() {
+        const username = document.getElementById('newAdminUsername').value.trim();
+        const password = document.getElementById('newAdminPassword').value;
+        if (!username || !password) {
+            showToast('Missing Fields', 'Enter a username and password.', true);
+            return;
+        }
+        try {
+            await apiFetch('/api/admin-auth/admins', { method: 'POST', body: JSON.stringify({ username, password }) });
+            document.getElementById('newAdminUsername').value = '';
+            document.getElementById('newAdminPassword').value = '';
+            showToast('Admin Created', `${username} can now sign in to this console.`);
+            loadAdmins();
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Create Admin", err.message, true);
+        }
+    }
+
+    async function deleteAdmin(id, username) {
+        if (!confirm(`Remove admin access for ${username}?`)) return;
+        try {
+            await apiFetch(`/api/admin-auth/admins/${id}`, { method: 'DELETE' });
+            showToast('Admin Removed', `${username} no longer has console access.`);
+            loadAdmins();
+            loadOverview();
+        } catch (err) {
+            showToast("Couldn't Remove Admin", err.message, true);
+        }
+    }
+
+    /* ---------------- MY ACCOUNT ---------------- */
+    async function changeMyPassword() {
+        const currentPassword = document.getElementById('acct-current-password').value;
+        const newPassword = document.getElementById('acct-new-password').value;
+        if (!currentPassword || !newPassword) {
+            showToast('Missing Fields', 'Enter your current and new password.', true);
+            return;
+        }
+        try {
+            await apiFetch('/api/admin-auth/password', { method: 'PUT', body: JSON.stringify({ currentPassword, newPassword }) });
+            document.getElementById('acct-current-password').value = '';
+            document.getElementById('acct-new-password').value = '';
+            showToast('Password Updated', 'Use your new password next time you sign in.');
+        } catch (err) {
+            showToast("Couldn't Update Password", err.message, true);
+        }
+    }
+
+    /* ---------------- SHARED PAGINATION ---------------- */
+    function renderPager(containerId, pagerState, loadFn) {
+        const container = document.getElementById(containerId);
+        const totalPages = Math.max(1, Math.ceil(pagerState.total / pagerState.pageSize));
+        if (totalPages <= 1) { container.innerHTML = ''; return; }
+        container.innerHTML = `
+            <button class="btn btn-sm" ${pagerState.page <= 1 ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page - 1})">Prev</button>
+            <span>Page ${pagerState.page} of ${totalPages}</span>
+            <button class="btn btn-sm" ${pagerState.page >= totalPages ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page + 1})">Next</button>
+        `;
+    }
+</script>
+</body>
+</html>

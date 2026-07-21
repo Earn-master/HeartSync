@@ -78,3 +78,50 @@ CREATE TABLE IF NOT EXISTS site_settings (
     CONSTRAINT single_row CHECK (id = 1)
 );
 INSERT INTO site_settings (id) VALUES (1) ON CONFLICT (id) DO NOTHING;
+
+-- =====================================================================
+-- ADMINS (completely separate identity from `users` — the dating-app
+-- members table above. Admins log in with a username + password only,
+-- on a separate /admin path, and never touch the members' email system.)
+-- =====================================================================
+CREATE TABLE IF NOT EXISTS admins (
+    id             SERIAL PRIMARY KEY,
+    username       TEXT UNIQUE NOT NULL,
+    password_hash  TEXT NOT NULL,
+    created_at     TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- =====================================================================
+-- PAYMENTS
+-- =====================================================================
+
+-- Paystack USSD charge attempts, so we can verify/poll and reconcile them.
+CREATE TABLE IF NOT EXISTS paystack_transactions (
+    id           SERIAL PRIMARY KEY,
+    user_id      INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    reference    TEXT UNIQUE NOT NULL,
+    tier         TEXT NOT NULL,
+    amount       INTEGER NOT NULL,
+    currency     TEXT DEFAULT 'NGN',
+    ussd_type    TEXT,
+    status       TEXT NOT NULL DEFAULT 'pending', -- pending | success | failed
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    updated_at   TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_paystack_tx_user ON paystack_transactions(user_id);
+
+-- Gift card redemptions. The user only ever submits the gift card's ID/code;
+-- an admin manually verifies it out-of-band and approves or rejects it here.
+CREATE TABLE IF NOT EXISTS giftcard_redemptions (
+    id            SERIAL PRIMARY KEY,
+    user_id       INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    code          TEXT NOT NULL,
+    tier          TEXT NOT NULL,
+    status        TEXT NOT NULL DEFAULT 'pending', -- pending | approved | rejected
+    admin_note    TEXT DEFAULT '',
+    reviewed_by   INTEGER REFERENCES admins(id) ON DELETE SET NULL,
+    reviewed_at   TIMESTAMPTZ,
+    created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_giftcard_user ON giftcard_redemptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_giftcard_status ON giftcard_redemptions(status);
