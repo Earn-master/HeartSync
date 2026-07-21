@@ -40,6 +40,7 @@ if (process.env.STRIPE_SECRET_KEY) {
 const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || null;
 const PAYSTACK_CURRENCY = process.env.PAYSTACK_CURRENCY || 'NGN';
 const PAYSTACK_AMOUNTS = {
+    plus: process.env.PAYSTACK_AMOUNT_PLUS ? parseInt(process.env.PAYSTACK_AMOUNT_PLUS, 10) : null,
     gold: process.env.PAYSTACK_AMOUNT_GOLD ? parseInt(process.env.PAYSTACK_AMOUNT_GOLD, 10) : null,
     platinum: process.env.PAYSTACK_AMOUNT_PLATINUM ? parseInt(process.env.PAYSTACK_AMOUNT_PLATINUM, 10) : null
 };
@@ -512,12 +513,14 @@ app.get('/api/site-settings', async (req, res) => {
 app.post('/api/premium/checkout', authRequired, async (req, res) => {
     if (!stripe) {
         return res.status(501).json({
-            error: 'Payments are not configured on this deployment yet. Set STRIPE_SECRET_KEY, STRIPE_PRICE_GOLD and STRIPE_PRICE_PLATINUM in your environment to enable real checkout.'
+            error: 'Payments are not configured on this deployment yet. Set STRIPE_SECRET_KEY, STRIPE_PRICE_PLUS, STRIPE_PRICE_GOLD and STRIPE_PRICE_PLATINUM in your environment to enable real checkout.'
         });
     }
     try {
-        const { tier } = req.body; // 'gold' | 'platinum'
-        const priceId = tier === 'platinum' ? process.env.STRIPE_PRICE_PLATINUM : process.env.STRIPE_PRICE_GOLD;
+        const { tier } = req.body; // 'plus' | 'gold' | 'platinum'
+        const priceIds = { plus: process.env.STRIPE_PRICE_PLUS, gold: process.env.STRIPE_PRICE_GOLD, platinum: process.env.STRIPE_PRICE_PLATINUM };
+        if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
+        const priceId = priceIds[tier];
         if (!priceId) return res.status(400).json({ error: 'That plan is not configured.' });
 
         const session = await stripe.checkout.sessions.create({
@@ -561,7 +564,7 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 // =====================================================================
 app.get('/api/premium/paystack/banks', (req, res) => {
     res.json({
-        enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
+        enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
         currency: PAYSTACK_CURRENCY,
         banks: Object.entries(PAYSTACK_USSD_BANKS).map(([code, name]) => ({ code, name }))
     });
@@ -572,8 +575,8 @@ app.post('/api/premium/paystack/ussd/initiate', authRequired, async (req, res) =
         return res.status(501).json({ error: 'USSD payments are not configured on this deployment yet. Set PAYSTACK_SECRET_KEY, PAYSTACK_AMOUNT_GOLD and PAYSTACK_AMOUNT_PLATINUM in your environment to enable it.' });
     }
     try {
-        const { tier, bankCode } = req.body; // 'gold' | 'platinum', '737' | '919' | '822' | '966'
-        if (!['gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
+        const { tier, bankCode } = req.body; // 'plus' | 'gold' | 'platinum', '737' | '919' | '822' | '966'
+        if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
         if (!PAYSTACK_USSD_BANKS[bankCode]) return res.status(400).json({ error: 'Choose a valid bank for USSD payment.' });
         const amount = PAYSTACK_AMOUNTS[tier];
         if (!amount) return res.status(400).json({ error: 'That plan is not configured for USSD payment.' });
@@ -686,8 +689,7 @@ app.post('/api/premium/paypal/checkout', authRequired, (req, res) => {
 app.post('/api/premium/giftcard/redeem', authRequired, async (req, res) => {
     try {
         const { tier, code } = req.body;
-        if (!['gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
-        const trimmedCode = String(code || '').trim();
+        if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
         if (!trimmedCode) return res.status(400).json({ error: 'Enter your gift card ID/code.' });
         if (trimmedCode.length > 100) return res.status(400).json({ error: 'That code looks too long to be valid.' });
 

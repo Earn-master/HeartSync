@@ -1683,7 +1683,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
             gap: 32px;
-            max-width: 1000px;
+            max-width: 1300px;
             margin: 40px auto;
         }
 
@@ -2345,14 +2345,27 @@
                         <button class="btn btn-secondary" style="width:100%">Current Plan</button>
                     </div>
 
+                    <div class="pricing-card">
+                        <h3>HeartSync Spark</h3>
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">A Little Extra Momentum</p>
+                        <div class="price-box"><span class="price-amt">$5</span><span style="color:var(--text-muted)"> / mo</span></div>
+                        <hr style="border:none; border-top:1px solid var(--border)">
+                        <ul class="pricing-features-list">
+                            <li><i class="fa-solid fa-check"></i> Unlimited daily profile likes</li>
+                            <li><i class="fa-solid fa-check"></i> 1 Free Super Like weekly</li>
+                            <li><i class="fa-solid fa-check"></i> See who recently viewed your profile</li>
+                        </ul>
+                        <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout('plus')" id="premium-btn-plus">Upgrade Account</button>
+                    </div>
+
                     <div class="pricing-card recommended">
                         <div class="recommended-badge">Most Popular</div>
                         <h3>HeartSync Gold</h3>
                         <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Accelerated Relationship Connection</p>
-                        <div class="price-box"><span class="price-amt">$19.99</span><span style="color:var(--text-muted)"> / mo</span></div>
+                        <div class="price-box"><span class="price-amt">$12</span><span style="color:var(--text-muted)"> / mo</span></div>
                         <hr style="border:none; border-top:1px solid var(--border)">
                         <ul class="pricing-features-list">
-                            <li><i class="fa-solid fa-check"></i> Unlimited daily profile likes</li>
+                            <li><i class="fa-solid fa-check"></i> Everything in Spark</li>
                             <li><i class="fa-solid fa-check"></i> See exact profiles who liked you</li>
                             <li><i class="fa-solid fa-check"></i> 5 Free Super Likes weekly</li>
                             <li><i class="fa-solid fa-check"></i> Incognito privacy controls toggle</li>
@@ -2363,7 +2376,7 @@
                     <div class="pricing-card">
                         <h3>HeartSync Platinum</h3>
                         <p style="color:var(--text-muted); font-size:0.85rem; margin-top:4px;">Maximum Visibility &amp; Priority Matching</p>
-                        <div class="price-box"><span class="price-amt">$34.99</span><span style="color:var(--text-muted)"> / mo</span></div>
+                        <div class="price-box"><span class="price-amt">$29.99</span><span style="color:var(--text-muted)"> / mo</span></div>
                         <hr style="border:none; border-top:1px solid var(--border)">
                         <ul class="pricing-features-list">
                             <li><i class="fa-solid fa-check"></i> Everything in Gold</li>
@@ -2382,12 +2395,15 @@
 
                     <div class="form-group">
                         <label class="form-label">Plan</label>
-                        <div style="display:flex; gap:16px;">
+                        <div style="display:flex; gap:16px; flex-wrap:wrap;">
                             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="radio" name="pm-tier" value="gold" checked onchange="onPaymentTierChange()"> Gold — $19.99/mo
+                                <input type="radio" name="pm-tier" value="plus" checked onchange="onPaymentTierChange()"> Spark — $5/mo
                             </label>
                             <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
-                                <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $34.99/mo
+                                <input type="radio" name="pm-tier" value="gold" onchange="onPaymentTierChange()"> Gold — $12/mo
+                            </label>
+                            <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                                <input type="radio" name="pm-tier" value="platinum" onchange="onPaymentTierChange()"> Platinum — $29.99/mo
                             </label>
                         </div>
                     </div>
