@@ -8,6 +8,8 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>HeartSync | Connect Deeply</title>
+    <link rel="icon" type="image/svg+xml" href="/assets/logo-mark.svg">
+    <link rel="apple-touch-icon" href="/assets/logo-mark.svg">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -2132,7 +2134,20 @@
     <!-- GLOBAL NAVBAR -->
     <nav class="navbar" id="mainNavbar">
         <div class="nav-brand" onclick="navigateTo('home')">
-            <i class="fa-solid ref fa-heart-pulse"></i> HeartSync
+            <svg viewBox="0 0 120 108" width="26" height="24" aria-hidden="true" style="flex-shrink:0;">
+                <defs>
+                    <linearGradient id="navLogoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#ff4b72"/>
+                        <stop offset="100%" stop-color="#6c5ce7"/>
+                    </linearGradient>
+                    <clipPath id="navLogoClip">
+                        <path d="M60,100 C25,72 4,48 4,26 C4,10 17,0 33,0 C45,0 55,7 60,17 C65,7 75,0 87,0 C103,0 116,10 116,26 C116,48 95,72 60,100 Z"/>
+                    </clipPath>
+                </defs>
+                <path d="M60,100 C25,72 4,48 4,26 C4,10 17,0 33,0 C45,0 55,7 60,17 C65,7 75,0 87,0 C103,0 116,10 116,26 C116,48 95,72 60,100 Z" fill="url(#navLogoGrad)"/>
+                <polyline points="2,50 34,50 47,20 61,84 74,42 85,50 118,50" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#navLogoClip)"/>
+            </svg>
+            HeartSync
         </div>
         <ul class="nav-links" id="desktop-links">
             <li><a href="#" onclick="navigateTo('home')">Home</a></li>
