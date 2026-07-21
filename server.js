@@ -533,7 +533,7 @@ app.get('/api/site-settings', async (req, res) => {
 app.post('/api/premium/checkout', authRequired, async (req, res) => {
     if (!stripe) {
         return res.status(501).json({
-            error: 'Payments are not configured on this deployment yet. Set STRIPE_SECRET_KEY, STRIPE_PRICE_PLUS, STRIPE_PRICE_GOLD and STRIPE_PRICE_PLATINUM in your environment to enable real checkout.'
+            error: 'Card payments aren\'t enabled on this deployment yet. Please check back soon, or use USSD or Gift Card for now.'
         });
     }
     try {
@@ -582,6 +582,16 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
 // =====================================================================
 // PAYSTACK MOBILE MONEY CHECKOUT (Ghana, GHS only) — opt-in via PAYSTACK_SECRET_KEY
 // =====================================================================
+// Lets the frontend know upfront which payment methods are actually
+// configured on this deployment, so it can show an inline "unavailable"
+// notice instead of only failing after the user clicks Pay.
+app.get('/api/premium/methods', (req, res) => {
+    res.json({
+        card: !!stripe,
+        ussd: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum)
+    });
+});
+
 app.get('/api/premium/paystack/banks', (req, res) => {
     res.json({
         enabled: !!(PAYSTACK_SECRET_KEY && PAYSTACK_AMOUNTS.plus && PAYSTACK_AMOUNTS.gold && PAYSTACK_AMOUNTS.platinum),
@@ -592,7 +602,7 @@ app.get('/api/premium/paystack/banks', (req, res) => {
 
 app.post('/api/premium/paystack/ussd/initiate', authRequired, async (req, res) => {
     if (!PAYSTACK_SECRET_KEY) {
-        return res.status(501).json({ error: 'Mobile Money payments are not configured on this deployment yet. Set PAYSTACK_SECRET_KEY in your environment to enable it.' });
+        return res.status(501).json({ error: "USSD payments aren't enabled on this deployment yet. Please check back soon, or use Card or Gift Card for now." });
     }
     try {
         const { tier, provider, phone } = req.body; // 'plus' | 'gold' | 'platinum', 'mtn' | 'vod' | 'atl'
@@ -710,6 +720,7 @@ app.post('/api/premium/paypal/checkout', authRequired, (req, res) => {
 app.post('/api/premium/giftcard/redeem', authRequired, async (req, res) => {
     try {
         const { tier, code } = req.body;
+        const trimmedCode = (code || '').trim();
         if (!['plus', 'gold', 'platinum'].includes(tier)) return res.status(400).json({ error: 'Choose a valid plan.' });
         if (!trimmedCode) return res.status(400).json({ error: 'Enter your gift card ID/code.' });
         if (trimmedCode.length > 100) return res.status(400).json({ error: 'That code looks too long to be valid.' });

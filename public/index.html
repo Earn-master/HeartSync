@@ -2114,12 +2114,18 @@
         }
         .main-content-panel { padding: 20px 16px; }
 
-        /* --- Phone-frame presentation on wider screens --- */
+        /* --- Phone-frame presentation on wider screens (app views only) ---
+               The homepage (.is-home-view) is a full-width marketing page and
+               is intentionally excluded from the phone frame so its wide
+               sections (hero, gallery, footer, etc.) aren't clipped/squeezed
+               into a 480px column and hidden off the right edge. --- */
         @media (min-width: 481px) {
             html { background-color: #dfe3e8; }
             [data-theme="dark"] { background-color: #05060a; }
-            body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.25); min-height: 100vh; }
-            .navbar, .mobile-nav {
+            body:not(.is-home-view) { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.25); min-height: 100vh; }
+            body.is-home-view { max-width: 100%; box-shadow: none; }
+            body:not(.is-home-view) .navbar,
+            body:not(.is-home-view) .mobile-nav {
                 left: 50%;
                 right: auto;
                 width: 100%;
@@ -2129,7 +2135,7 @@
         }
     </style>
 </head>
-<body data-theme="light">
+<body data-theme="light" class="is-home-view">
     <!-- Shown until we know whether to render the homepage or the dashboard, so a
          returning logged-in visitor never sees the logged-out landing page flash on refresh. -->
     <div id="appBootLoader"><div class="boot-spinner"></div></div>
@@ -2243,8 +2249,11 @@
             <div class="settings-content-panel">
                 <!-- Card / Stripe -->
                 <div class="settings-pane active-pane" id="pm-pane-card">
-                    <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Pay securely by card through Stripe. You'll be redirected to complete checkout.</p>
-                    <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout(getSelectedPaymentTier())" id="pm-card-btn">Pay with Card</button>
+                    <div id="pm-card-disabled-msg" style="display:none; color:var(--text-muted); font-size:0.9rem;"></div>
+                    <div id="pm-card-form">
+                        <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:14px;">Pay securely by card through Stripe. You'll be redirected to complete checkout.</p>
+                        <button class="btn btn-primary" style="width:100%" onclick="startPremiumCheckout(getSelectedPaymentTier())" id="pm-card-btn">Pay with Card</button>
+                    </div>
                 </div>
 
                 <!-- USSD / Paystack (Ghana, GHS only) -->
@@ -3146,6 +3155,7 @@
             }
 
             state.currentView = viewId;
+            document.body.classList.toggle('is-home-view', viewId === 'home');
             document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active-view'));
             const targetView = document.getElementById(`view-${viewId}`);
             if (targetView) targetView.classList.add('active-view');
@@ -4105,8 +4115,31 @@
 
         async function initPremiumPaymentMethods() {
             updatePremiumPlanButtons();
+            await loadPaymentMethodAvailability();
             await loadPaystackBanks();
             await loadMyGiftcards();
+        }
+
+        /* ---- Which payment methods are actually configured on this deployment ---- */
+        async function loadPaymentMethodAvailability() {
+            const cardMsg = document.getElementById('pm-card-disabled-msg');
+            const cardForm = document.getElementById('pm-card-form');
+            try {
+                const methods = await apiFetch('/api/premium/methods');
+                if (!methods.card) {
+                    cardMsg.innerText = "Card payments aren't enabled on this deployment yet. Please check back soon, or use USSD or Gift Card for now.";
+                    cardMsg.style.display = "block";
+                    cardForm.style.display = "none";
+                } else {
+                    cardMsg.style.display = "none";
+                    cardForm.style.display = "block";
+                }
+            } catch (err) {
+                // If we can't check, don't block the user — let the Pay button's
+                // own error handling take over if checkout actually fails.
+                cardMsg.style.display = "none";
+                cardForm.style.display = "block";
+            }
         }
 
         /* ---- USSD via Paystack (Ghana, GHS only) ---- */
