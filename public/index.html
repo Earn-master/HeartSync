@@ -768,6 +768,138 @@
 
         .social-icons a:hover { color: var(--primary); }
 
+        /* --- APP BOOT LOADER ---
+           Shown while we check localStorage for a session on page load/refresh so the
+           visitor never sees a flash of the logged-out homepage before the app decides
+           whether to show the dashboard instead. */
+        #appBootLoader {
+            position: fixed;
+            inset: 0;
+            z-index: 5000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-body);
+            transition: opacity 0.25s ease;
+        }
+        #appBootLoader.boot-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .boot-spinner {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            animation: bootSpin 0.8s linear infinite;
+        }
+        @keyframes bootSpin { to { transform: rotate(360deg); } }
+
+        /* --- ADMIN DASHBOARD --- */
+        .admin-stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .admin-stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            padding: 18px 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        .admin-stat-card strong {
+            display: block;
+            font-size: 1.6rem;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .admin-stat-card span {
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .admin-toolbar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
+        }
+        .admin-table-wrap {
+            overflow-x: auto;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+        }
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 720px;
+        }
+        .admin-table th, .admin-table td {
+            text-align: left;
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.88rem;
+            white-space: nowrap;
+        }
+        .admin-table th {
+            background: var(--bg-el);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+        .admin-table tr:last-child td { border-bottom: none; }
+        .admin-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: var(--radius-full);
+            font-size: 0.72rem;
+            font-weight: 600;
+        }
+        .admin-badge.on { background: rgba(0,206,201,0.15); color: #00a19d; }
+        .admin-badge.off { background: var(--bg-el); color: var(--text-muted); }
+        .admin-badge.danger { background: rgba(255,75,114,0.15); color: var(--primary); }
+        .admin-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .admin-row-actions button {
+            font-size: 0.72rem;
+            padding: 5px 10px;
+            border-radius: var(--radius-full);
+            border: 1px solid var(--border);
+            background: var(--bg-el);
+            color: var(--text-main);
+        }
+        .admin-row-actions button:hover { background: var(--border); }
+        .admin-row-actions button.danger { color: var(--primary); border-color: rgba(255,75,114,0.3); }
+        .admin-pagination { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 16px; }
+        .site-image-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+        .site-image-slot {
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-align: center;
+        }
+        .site-image-slot img {
+            width: 100%;
+            height: 130px;
+            object-fit: cover;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+            background: var(--bg-el);
+        }
+        .site-image-slot label {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            display: block;
+            margin-bottom: 8px;
+        }
+
         /* --- 2. AUTHENTICATION & ONBOARDING --- */
         .modal-overlay {
             position: fixed;
@@ -1639,6 +1771,10 @@
     </style>
 </head>
 <body data-theme="light">
+    <!-- Shown until we know whether to render the homepage or the dashboard, so a
+         returning logged-in visitor never sees the logged-out landing page flash on refresh. -->
+    <div id="appBootLoader"><div class="boot-spinner"></div></div>
+
 
     <!-- TOAST NOTIFICATION STACK -->
     <div class="toast-stack" id="toastStack"></div>
@@ -1654,6 +1790,7 @@
             <li><a href="#" onclick="navigateTo('matches')">Matches</a></li>
             <li><a href="#" onclick="navigateTo('messages')">Messages</a></li>
             <li><a href="#" onclick="navigateTo('premium')">Premium</a></li>
+            <li id="nav-admin-link" style="display:none;"><a href="#" onclick="navigateTo('admin')"><i class="fa-solid fa-user-shield"></i> Admin</a></li>
         </ul>
         <div class="nav-actions">
             <button class="btn-icon" onclick="toggleTheme()" aria-label="Toggle dark mode">
@@ -1686,6 +1823,9 @@
         </a>
         <a href="#" class="mobile-nav-item" id="m-nav-settings" onclick="navigateTo('settings')">
             <i class="fa-solid fa-gear"></i>Settings
+        </a>
+        <a href="#" class="mobile-nav-item" id="m-nav-admin" onclick="navigateTo('admin')" style="display:none;">
+            <i class="fa-solid fa-user-shield"></i>Admin
         </a>
     </div>
 
@@ -1735,17 +1875,17 @@
         <section id="view-home" class="app-view active-view">
             <div class="hero-section">
                 <div class="hero-content">
-                    <h1>Find the connection you've been searching for</h1>
-                    <p>HeartSync uses intentional matching algorithms based on structural core personality traits, life values, and deep interests. No endless superficial swiping.</p>
+                    <h1 id="site-hero-title">Find the connection you've been searching for</h1>
+                    <p id="site-hero-subtitle">HeartSync uses intentional matching algorithms based on structural core personality traits, life values, and deep interests. No endless superficial swiping.</p>
                     <button class="btn btn-primary" onclick="openAuthModal('signup')">Create Free Profile</button>
                 </div>
                 <div class="hero-graphics">
                     <div class="hero-img-stack">
                         <div class="hero-card hero-card-1">
-                            <img src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
+                            <img id="site-img-hero1" src="https://picsum.photos/id/64/400/600" alt="Dating Profile Match">
                         </div>
                         <div class="hero-card hero-card-2">
-                            <img src="https://picsum.photos/id/91/400/600" alt="Happy Couple Interaction">
+                            <img id="site-img-hero2" src="https://picsum.photos/id/91/400/600" alt="Happy Couple Interaction">
                         </div>
                     </div>
                 </div>
@@ -1795,21 +1935,21 @@
             <p class="section-subtitle reveal-up">A glimpse into the dates and memories HeartSync has helped create.</p>
             <div class="gallery-grid reveal-up">
                 <div class="gallery-card">
-                    <img src="https://picsum.photos/id/1027/500/625" alt="Couple laughing together over coffee">
+                    <img id="site-img-gallery1" src="https://picsum.photos/id/1027/500/625" alt="Couple laughing together over coffee">
                     <div class="gallery-caption">
                         <strong>Coffee First Dates</strong>
                         <span>Where thousands of conversations begin</span>
                     </div>
                 </div>
                 <div class="gallery-card">
-                    <img src="https://picsum.photos/id/1074/500/625" alt="Couple walking together outdoors">
+                    <img id="site-img-gallery2" src="https://picsum.photos/id/1074/500/625" alt="Couple walking together outdoors">
                     <div class="gallery-caption">
                         <strong>Weekend Adventures</strong>
                         <span>Shared interests turned into shared journeys</span>
                     </div>
                 </div>
                 <div class="gallery-card">
-                    <img src="https://picsum.photos/id/1062/500/625" alt="Couple celebrating a special moment">
+                    <img id="site-img-gallery3" src="https://picsum.photos/id/1062/500/625" alt="Couple celebrating a special moment">
                     <div class="gallery-caption">
                         <strong>Milestone Moments</strong>
                         <span>Celebrating the connections that last</span>
@@ -1856,7 +1996,7 @@
                     </div>
                 </div>
                 <div class="safety-img-box">
-                    <img src="https://picsum.photos/id/367/500/350" alt="Security Illustration Stack" style="border-radius:var(--radius-md); max-width:100%;">
+                    <img id="site-img-safety" src="https://picsum.photos/id/367/500/350" alt="Security Illustration Stack" style="border-radius:var(--radius-md); max-width:100%;">
                 </div>
             </div>
 
@@ -2304,6 +2444,95 @@
             </div>
         </section>
 
+        <!-- --- 9. VIEW: ADMIN DASHBOARD --- -->
+        <section id="view-admin" class="app-view">
+            <div class="main-content-panel" style="width:100%;">
+                <h2 class="section-title" style="text-align:left; margin-bottom:4px;">Admin Dashboard</h2>
+                <p class="section-subtitle" style="text-align:left; margin-bottom:24px;">Manage members, matches, and the public homepage.</p>
+
+                <div class="settings-container">
+                    <div class="settings-nav">
+                        <button class="settings-nav-btn active-settings-tab" onclick="switchAdminTab(event, 'a-overview')"><i class="fa-solid fa-chart-line"></i> Overview</button>
+                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-users')"><i class="fa-solid fa-users"></i> Users</button>
+                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-content')"><i class="fa-solid fa-image"></i> Homepage Content</button>
+                        <button class="settings-nav-btn" onclick="switchAdminTab(event, 'a-matches')"><i class="fa-solid fa-heart"></i> Matches</button>
+                    </div>
+                    <div class="settings-content-panel">
+
+                        <!-- Overview -->
+                        <div class="settings-pane active-pane" id="a-overview">
+                            <h3 style="margin-bottom:16px;">Site Overview</h3>
+                            <div class="admin-stat-grid" id="adminOverviewGrid">
+                                <div class="admin-stat-card"><strong>—</strong><span>Total Members</span></div>
+                            </div>
+                            <button class="btn btn-secondary" onclick="loadAdminOverview()"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+                        </div>
+
+                        <!-- Users -->
+                        <div class="settings-pane" id="a-users">
+                            <h3 style="margin-bottom:16px;">Manage Users</h3>
+                            <div class="admin-toolbar">
+                                <input type="text" class="form-control" id="adminUserSearch" placeholder="Search by name or email..." style="max-width:280px;" onkeypress="if(event.key==='Enter') loadAdminUsers(1)">
+                                <button class="btn btn-primary" onclick="loadAdminUsers(1)"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+                            </div>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Name</th><th>Email</th><th>Status</th><th>Premium</th><th>Role</th><th>Joined</th><th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUsersTableBody">
+                                        <tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="admin-pagination" id="adminUsersPagination"></div>
+                        </div>
+
+                        <!-- Homepage Content -->
+                        <div class="settings-pane" id="a-content">
+                            <h3 style="margin-bottom:6px;">Homepage Content</h3>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:16px;">Replace the default stock photos and headline shown to every visitor on the homepage.</p>
+
+                            <div class="form-group">
+                                <label class="form-label">Hero Headline</label>
+                                <input type="text" class="form-control" id="admin-hero-title" placeholder="Find the connection you've been searching for">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Hero Subheadline</label>
+                                <textarea class="form-control" id="admin-hero-subtitle" rows="2" placeholder="HeartSync uses intentional matching algorithms..."></textarea>
+                            </div>
+                            <button class="btn btn-primary" onclick="saveAdminHeroCopy()"><i class="fa-solid fa-floppy-disk"></i> Save Headline</button>
+
+                            <hr style="border:none; border-top:1px solid var(--border); margin:28px 0;">
+
+                            <h4 style="margin-bottom:6px;">Homepage Photos</h4>
+                            <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:10px;">Click a photo to upload a replacement (JPG/PNG, under 8MB). This replaces it for every visitor immediately.</p>
+                            <div class="site-image-grid" id="adminSiteImageGrid"></div>
+                        </div>
+
+                        <!-- Matches -->
+                        <div class="settings-pane" id="a-matches">
+                            <h3 style="margin-bottom:16px;">Matches</h3>
+                            <div class="admin-table-wrap">
+                                <table class="admin-table">
+                                    <thead>
+                                        <tr><th>Member 1</th><th>Member 2</th><th>Messages</th><th>Matched</th><th>Actions</th></tr>
+                                    </thead>
+                                    <tbody id="adminMatchesTableBody">
+                                        <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading matches…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="admin-pagination" id="adminMatchesPagination"></div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- CORE VANILLA JAVASCRIPT APP STATE MACHINE ENGINE -->
@@ -2357,7 +2586,8 @@
         document.addEventListener('DOMContentLoaded', async () => {
             initScrollReveal();
             initNavbarScrollEffect();
-            await loadPublicStats();
+            loadPublicStats();
+            loadSiteSettings();
 
             const token = getToken();
             if (token) {
@@ -2374,7 +2604,44 @@
                     clearToken();
                 }
             }
+
+            hideBootLoader();
         });
+
+        function hideBootLoader() {
+            const loader = document.getElementById('appBootLoader');
+            if (loader) loader.classList.add('boot-hidden');
+        }
+
+        /* ---------------- HOMEPAGE SITE SETTINGS (admin-managed) ---------------- */
+        async function loadSiteSettings() {
+            try {
+                const settings = await apiFetch('/api/site-settings');
+                applySiteSettings(settings);
+            } catch (err) {
+                // Falls back to the default stock photos/copy already in the markup.
+            }
+        }
+
+        function applySiteSettings(settings) {
+            if (!settings) return;
+            if (settings.heroTitle) document.getElementById('site-hero-title').innerText = settings.heroTitle;
+            if (settings.heroSubtitle) document.getElementById('site-hero-subtitle').innerText = settings.heroSubtitle;
+            const imageMap = {
+                heroImage1: 'site-img-hero1',
+                heroImage2: 'site-img-hero2',
+                galleryImage1: 'site-img-gallery1',
+                galleryImage2: 'site-img-gallery2',
+                galleryImage3: 'site-img-gallery3',
+                safetyImage: 'site-img-safety'
+            };
+            Object.keys(imageMap).forEach(key => {
+                if (settings[key]) {
+                    const el = document.getElementById(imageMap[key]);
+                    if (el) el.src = settings[key];
+                }
+            });
+        }
 
         async function loadPublicStats() {
             try {
@@ -2390,9 +2657,13 @@
 
         /* ---------------- ROUTER ---------------- */
         function navigateTo(viewId) {
-            const protectedViews = ["dashboard", "discover", "matches", "messages", "settings", "premium"];
+            const protectedViews = ["dashboard", "discover", "matches", "messages", "settings", "premium", "admin"];
             if (!state.user && protectedViews.includes(viewId)) {
                 openAuthModal('signup');
+                return;
+            }
+            if (viewId === 'admin' && !state.user.isAdmin) {
+                showToast("Admin Access Required", "Your account doesn't have admin permissions.", "fa-lock");
                 return;
             }
 
@@ -2420,6 +2691,12 @@
                 document.getElementById('activeChatWindow').style.display = "none";
             }
             if (viewId === 'settings') populateSettingsForm();
+            if (viewId === 'admin') {
+                loadAdminOverview();
+                loadAdminUsers(1);
+                loadAdminSiteSettingsForm();
+                loadAdminMatches(1);
+            }
 
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -2500,6 +2777,8 @@
             const navAvatar = document.getElementById('user-avatar-nav');
             navAvatar.style.display = "block";
             document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
+            document.getElementById('nav-admin-link').style.display = user.isAdmin ? "block" : "none";
+            document.getElementById('m-nav-admin').style.display = user.isAdmin ? "flex" : "none";
             connectSocket();
             if (isFresh) showToast("Welcome!", `Signed in as ${user.name}.`, "fa-circle-check");
         }
@@ -2511,6 +2790,8 @@
             document.getElementById('login-btn-nav').style.display = "inline-flex";
             document.getElementById('signup-btn-nav').style.display = "inline-flex";
             document.getElementById('user-avatar-nav').style.display = "none";
+            document.getElementById('nav-admin-link').style.display = "none";
+            document.getElementById('m-nav-admin').style.display = "none";
             navigateTo('home');
         }
 
@@ -3069,6 +3350,278 @@
                 setTimeout(() => logout(), 1200);
             } catch (err) {
                 showToast("Couldn't Delete Account", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ================================================================
+           ADMIN DASHBOARD
+           ================================================================ */
+        function switchAdminTab(event, paneId) {
+            document.querySelectorAll('#view-admin .settings-nav-btn').forEach(btn => btn.classList.remove('active-settings-tab'));
+            document.querySelectorAll('#view-admin .settings-pane').forEach(pane => pane.classList.remove('active-pane'));
+            event.currentTarget.classList.add('active-settings-tab');
+            document.getElementById(paneId).classList.add('active-pane');
+        }
+
+        function escapeHtml(str) {
+            const div = document.createElement('div');
+            div.innerText = str == null ? '' : String(str);
+            return div.innerHTML;
+        }
+
+        /* ---- Overview ---- */
+        async function loadAdminOverview() {
+            const grid = document.getElementById('adminOverviewGrid');
+            try {
+                const stats = await apiFetch('/api/admin/overview');
+                const cards = [
+                    { label: 'Total Members', value: stats.totalUsers },
+                    { label: 'Verified', value: stats.verifiedUsers },
+                    { label: 'Premium', value: stats.premiumUsers },
+                    { label: 'Admins', value: stats.adminUsers },
+                    { label: 'Suspended', value: stats.bannedUsers },
+                    { label: 'Total Matches', value: stats.totalMatches },
+                    { label: 'Messages Sent', value: stats.totalMessages },
+                    { label: 'New (7 days)', value: stats.newUsersLast7Days }
+                ];
+                grid.innerHTML = cards.map(c => `
+                    <div class="admin-stat-card"><strong>${c.value}</strong><span>${c.label}</span></div>
+                `).join('');
+            } catch (err) {
+                grid.innerHTML = `<div class="admin-stat-card"><span>Couldn't load overview: ${escapeHtml(err.message)}</span></div>`;
+            }
+        }
+
+        /* ---- Users ---- */
+        let adminUsersState = { page: 1, total: 0, pageSize: 25 };
+
+        async function loadAdminUsers(page) {
+            const tbody = document.getElementById('adminUsersTableBody');
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">Loading users…</td></tr>`;
+            try {
+                const search = document.getElementById('adminUserSearch').value.trim();
+                const query = search ? `?search=${encodeURIComponent(search)}&page=${page}` : `?page=${page}`;
+                const data = await apiFetch(`/api/admin/users${query}`);
+                adminUsersState = { page: data.page, total: data.total, pageSize: data.pageSize };
+                renderAdminUsersTable(data.users);
+                renderAdminPagination('adminUsersPagination', adminUsersState, loadAdminUsers);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--primary);">${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        function renderAdminUsersTable(users) {
+            const tbody = document.getElementById('adminUsersTableBody');
+            if (users.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--text-muted);">No users found.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = users.map(u => `
+                <tr>
+                    <td>${escapeHtml(u.name)}</td>
+                    <td>${escapeHtml(u.email)}</td>
+                    <td>
+                        <span class="admin-badge ${u.verified ? 'on' : 'off'}">${u.verified ? 'Verified' : 'Unverified'}</span>
+                        ${u.banned ? '<span class="admin-badge danger">Suspended</span>' : ''}
+                    </td>
+                    <td><span class="admin-badge ${u.isPremium ? 'on' : 'off'}">${u.isPremium ? (u.premiumTier || 'Premium') : 'Free'}</span></td>
+                    <td><span class="admin-badge ${u.isAdmin ? 'on' : 'off'}">${u.isAdmin ? 'Admin' : 'Member'}</span></td>
+                    <td>${new Date(u.createdAt).toLocaleDateString()}</td>
+                    <td>
+                        <div class="admin-row-actions">
+                            <button onclick="adminToggleUserField(${u.id}, 'verified', ${!u.verified})">${u.verified ? 'Unverify' : 'Verify'}</button>
+                            <button onclick="adminToggleUserField(${u.id}, 'isPremium', ${!u.isPremium})">${u.isPremium ? 'Remove Premium' : 'Grant Premium'}</button>
+                            <button onclick="adminToggleUserField(${u.id}, 'isAdmin', ${!u.isAdmin})">${u.isAdmin ? 'Remove Admin' : 'Make Admin'}</button>
+                            <button onclick="adminToggleUserField(${u.id}, 'banned', ${!u.banned})">${u.banned ? 'Unsuspend' : 'Suspend'}</button>
+                            <button class="danger" onclick="adminDeleteUser(${u.id}, '${escapeHtml(u.name).replace(/'/g, "\\'")}')">Delete</button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        async function adminToggleUserField(id, field, value) {
+            try {
+                await apiFetch(`/api/admin/users/${id}`, { method: 'PUT', body: JSON.stringify({ [field]: value }) });
+                showToast("User Updated", "Changes saved.", "fa-circle-check");
+                loadAdminUsers(adminUsersState.page);
+                loadAdminOverview();
+            } catch (err) {
+                showToast("Couldn't Update User", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        async function adminDeleteUser(id, name) {
+            if (!confirm(`Permanently delete ${name}'s account, matches, and messages? This cannot be undone.`)) return;
+            try {
+                await apiFetch(`/api/admin/users/${id}`, { method: 'DELETE' });
+                showToast("User Deleted", `${name}'s account was removed.`, "fa-circle-check");
+                loadAdminUsers(adminUsersState.page);
+                loadAdminOverview();
+            } catch (err) {
+                showToast("Couldn't Delete User", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ---- Shared pagination helper (used by Users + Matches tabs) ---- */
+        function renderAdminPagination(containerId, pagerState, loadFn) {
+            const container = document.getElementById(containerId);
+            const totalPages = Math.max(1, Math.ceil(pagerState.total / pagerState.pageSize));
+            if (totalPages <= 1) { container.innerHTML = ""; return; }
+            container.innerHTML = `
+                <button class="btn btn-secondary" ${pagerState.page <= 1 ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page - 1})">Prev</button>
+                <span style="color:var(--text-muted); font-size:0.85rem;">Page ${pagerState.page} of ${totalPages}</span>
+                <button class="btn btn-secondary" ${pagerState.page >= totalPages ? 'disabled' : ''} onclick="(${loadFn.name})(${pagerState.page + 1})">Next</button>
+            `;
+        }
+
+        /* ---- Homepage Content ---- */
+        const SITE_IMAGE_SLOTS = [
+            { key: 'heroImage1', label: 'Hero Photo 1', fallback: 'https://picsum.photos/id/64/400/600' },
+            { key: 'heroImage2', label: 'Hero Photo 2', fallback: 'https://picsum.photos/id/91/400/600' },
+            { key: 'galleryImage1', label: 'Gallery Photo 1', fallback: 'https://picsum.photos/id/1027/500/625' },
+            { key: 'galleryImage2', label: 'Gallery Photo 2', fallback: 'https://picsum.photos/id/1074/500/625' },
+            { key: 'galleryImage3', label: 'Gallery Photo 3', fallback: 'https://picsum.photos/id/1062/500/625' },
+            { key: 'safetyImage', label: 'Safety Section Photo', fallback: 'https://picsum.photos/id/367/500/350' }
+        ];
+        let adminSiteSettings = {};
+
+        async function loadAdminSiteSettingsForm() {
+            try {
+                const settings = await apiFetch('/api/site-settings');
+                adminSiteSettings = settings;
+                document.getElementById('admin-hero-title').value = settings.heroTitle || '';
+                document.getElementById('admin-hero-subtitle').value = settings.heroSubtitle || '';
+                renderAdminSiteImageGrid();
+            } catch (err) {
+                showToast("Couldn't Load Homepage Content", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        function renderAdminSiteImageGrid() {
+            const grid = document.getElementById('adminSiteImageGrid');
+            grid.innerHTML = SITE_IMAGE_SLOTS.map(slot => `
+                <div class="site-image-slot">
+                    <label>${slot.label}</label>
+                    <img src="${adminSiteSettings[slot.key] || slot.fallback}" alt="${slot.label}">
+                    <input type="file" accept="image/*" id="site-file-${slot.key}" style="display:none;" onchange="handleSiteImageSelect('${slot.key}', event)">
+                    <button class="btn btn-secondary" style="width:100%; margin-bottom:6px;" onclick="document.getElementById('site-file-${slot.key}').click()"><i class="fa-solid fa-upload"></i> Replace</button>
+                    ${adminSiteSettings[slot.key] ? `<button class="btn" style="width:100%; background:var(--bg-el);" onclick="resetSiteImage('${slot.key}')">Reset to Default</button>` : ''}
+                </div>
+            `).join('');
+        }
+
+        function handleSiteImageSelect(slotKey, event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 8 * 1024 * 1024) {
+                showToast("Photo Too Large", "Please choose an image under 8MB.", "fa-triangle-exclamation");
+                return;
+            }
+            const reader = new FileReader();
+            reader.onload = async () => {
+                try {
+                    const { settings } = await apiFetch('/api/admin/site-settings', {
+                        method: 'PUT',
+                        body: JSON.stringify({ [slotKey]: reader.result })
+                    });
+                    adminSiteSettings = {
+                        heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle,
+                        heroImage1: settings.hero_image_1, heroImage2: settings.hero_image_2,
+                        galleryImage1: settings.gallery_image_1, galleryImage2: settings.gallery_image_2,
+                        galleryImage3: settings.gallery_image_3, safetyImage: settings.safety_image
+                    };
+                    renderAdminSiteImageGrid();
+                    applySiteSettings(adminSiteSettings);
+                    showToast("Photo Updated", "The homepage now shows your new photo.", "fa-camera");
+                } catch (err) {
+                    showToast("Upload Failed", err.message, "fa-triangle-exclamation");
+                }
+            };
+            reader.readAsDataURL(file);
+            event.target.value = "";
+        }
+
+        async function resetSiteImage(slotKey) {
+            try {
+                const { settings } = await apiFetch('/api/admin/site-settings', {
+                    method: 'PUT',
+                    body: JSON.stringify({ [slotKey]: null })
+                });
+                adminSiteSettings = {
+                    heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle,
+                    heroImage1: settings.hero_image_1, heroImage2: settings.hero_image_2,
+                    galleryImage1: settings.gallery_image_1, galleryImage2: settings.gallery_image_2,
+                    galleryImage3: settings.gallery_image_3, safetyImage: settings.safety_image
+                };
+                renderAdminSiteImageGrid();
+                const slot = SITE_IMAGE_SLOTS.find(s => s.key === slotKey);
+                const el = document.getElementById({
+                    heroImage1: 'site-img-hero1', heroImage2: 'site-img-hero2',
+                    galleryImage1: 'site-img-gallery1', galleryImage2: 'site-img-gallery2',
+                    galleryImage3: 'site-img-gallery3', safetyImage: 'site-img-safety'
+                }[slotKey]);
+                if (el && slot) el.src = slot.fallback;
+                showToast("Reset", "That photo is back to the default.", "fa-rotate-left");
+            } catch (err) {
+                showToast("Couldn't Reset Photo", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        async function saveAdminHeroCopy() {
+            try {
+                const heroTitle = document.getElementById('admin-hero-title').value.trim();
+                const heroSubtitle = document.getElementById('admin-hero-subtitle').value.trim();
+                const { settings } = await apiFetch('/api/admin/site-settings', {
+                    method: 'PUT',
+                    body: JSON.stringify({ heroTitle: heroTitle || null, heroSubtitle: heroSubtitle || null })
+                });
+                applySiteSettings({ heroTitle: settings.hero_title, heroSubtitle: settings.hero_subtitle });
+                if (!settings.hero_title) document.getElementById('site-hero-title').innerText = "Find the connection you've been searching for";
+                if (!settings.hero_subtitle) document.getElementById('site-hero-subtitle').innerText = "HeartSync uses intentional matching algorithms based on structural core personality traits, life values, and deep interests. No endless superficial swiping.";
+                showToast("Homepage Updated", "Headline changes are now live.", "fa-circle-check");
+            } catch (err) {
+                showToast("Couldn't Save", err.message, "fa-triangle-exclamation");
+            }
+        }
+
+        /* ---- Matches ---- */
+        let adminMatchesState = { page: 1, total: 0, pageSize: 25 };
+
+        async function loadAdminMatches(page) {
+            const tbody = document.getElementById('adminMatchesTableBody');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading matches…</td></tr>`;
+            try {
+                const data = await apiFetch(`/api/admin/matches?page=${page}`);
+                adminMatchesState = { page: data.page, total: data.total, pageSize: data.pageSize };
+                if (data.matches.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No matches yet.</td></tr>`;
+                } else {
+                    tbody.innerHTML = data.matches.map(m => `
+                        <tr>
+                            <td>${escapeHtml(m.user1.name)}<br><span style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(m.user1.email)}</span></td>
+                            <td>${escapeHtml(m.user2.name)}<br><span style="color:var(--text-muted); font-size:0.78rem;">${escapeHtml(m.user2.email)}</span></td>
+                            <td>${m.messageCount}</td>
+                            <td>${new Date(m.createdAt).toLocaleDateString()}</td>
+                            <td><div class="admin-row-actions"><button class="danger" onclick="adminDeleteMatch(${m.id})">Delete</button></div></td>
+                        </tr>
+                    `).join('');
+                }
+                renderAdminPagination('adminMatchesPagination', adminMatchesState, loadAdminMatches);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--primary);">${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        async function adminDeleteMatch(id) {
+            if (!confirm("Delete this match and its message history? This cannot be undone.")) return;
+            try {
+                await apiFetch(`/api/admin/matches/${id}`, { method: 'DELETE' });
+                showToast("Match Deleted", "The match was removed.", "fa-circle-check");
+                loadAdminMatches(adminMatchesState.page);
+                loadAdminOverview();
+            } catch (err) {
+                showToast("Couldn't Delete Match", err.message, "fa-triangle-exclamation");
             }
         }
 

@@ -17,12 +17,19 @@ if (!JWT_SECRET) {
 const PORT = process.env.PORT || 3000;
 const MAX_PHOTOS = 6;
 
+// Comma-separated list of emails that are auto-promoted to admin on signup/login.
+// Set ADMIN_EMAILS in your environment, e.g. ADMIN_EMAILS=you@example.com,ops@example.com
+const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '')
+    .split(',')
+    .map(e => e.trim().toLowerCase())
+    .filter(Boolean);
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(cors());
-app.use(express.json({ limit: '12mb' })); // photos are sent as base64 data URLs
+app.use(express.json({ limit: '20mb' })); // photos / site images are sent as base64 data URLs
 
 // ---------- Stripe (optional - only activates if STRIPE_SECRET_KEY is set) ----------
 let stripe = null;
@@ -78,8 +85,18 @@ function meProfile(row) {
         notifEmailMatches: row.notif_email_matches,
         notifPushMessages: row.notif_push_messages,
         incognito: row.incognito,
+        isAdmin: row.is_admin,
         age: calcAge(row.dob)
     };
+}
+
+// Promotes a user to admin in the DB if their email is in ADMIN_EMAILS
+// and they aren't already flagged. Returns the (possibly updated) user row.
+async function applyAdminAutoPromotion(user) {
+    if (!user || user.is_admin) return user;
+    if (!ADMIN_EMAILS.includes(String(user.email).toLowerCase())) return user;
+    const result = await pool.query('UPDATE users SET is_admin = TRUE WHERE id = $1 RETURNING *', [user.id]);
+    return result.rows[0];
 }
 
 async function authRequired(req, res, next) {
@@ -90,11 +107,19 @@ async function authRequired(req, res, next) {
         const payload = jwt.verify(token, JWT_SECRET);
         const result = await pool.query('SELECT * FROM users WHERE id = $1', [payload.id]);
         if (!result.rows[0]) return res.status(401).json({ error: 'Account no longer exists.' });
+        if (result.rows[0].banned) return res.status(403).json({ error: 'This account has been suspended.' });
         req.user = result.rows[0];
         next();
     } catch (err) {
         return res.status(401).json({ error: 'Invalid or expired session.' });
     }
+}
+
+function adminRequired(req, res, next) {
+    if (!req.user || !req.user.is_admin) {
+        return res.status(403).json({ error: 'Admin access required.' });
+    }
+    next();
 }
 
 async function getOrCreateMatchId(userAId, userBId) {
@@ -126,7 +151,8 @@ app.post('/api/auth/signup', async (req, res) => {
             `INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING *`,
             [normalizedEmail, hash, name.trim()]
         );
-        const user = result.rows[0];
+        let user = result.rows[0];
+        user = await applyAdminAutoPromotion(user);
         res.status(201).json({ token: signToken(user), user: meProfile(user) });
     } catch (err) {
         console.error(err);
@@ -140,10 +166,12 @@ app.post('/api/auth/login', async (req, res) => {
         if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
         const normalizedEmail = String(email).trim().toLowerCase();
         const result = await pool.query('SELECT * FROM users WHERE email = $1', [normalizedEmail]);
-        const user = result.rows[0];
+        let user = result.rows[0];
         if (!user) return res.status(401).json({ error: 'Incorrect email or password.' });
         const valid = await bcrypt.compare(password, user.password_hash);
         if (!valid) return res.status(401).json({ error: 'Incorrect email or password.' });
+        if (user.banned) return res.status(403).json({ error: 'This account has been suspended. Contact support if you think this is a mistake.' });
+        user = await applyAdminAutoPromotion(user);
         res.json({ token: signToken(user), user: meProfile(user) });
     } catch (err) {
         console.error(err);
@@ -454,6 +482,29 @@ app.get('/api/public/stats', async (req, res) => {
 });
 
 // =====================================================================
+// PUBLIC SITE SETTINGS (homepage images/copy the admin has customized)
+// =====================================================================
+app.get('/api/site-settings', async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM site_settings WHERE id = 1');
+        const row = result.rows[0] || {};
+        res.json({
+            heroTitle: row.hero_title || null,
+            heroSubtitle: row.hero_subtitle || null,
+            heroImage1: row.hero_image_1 || null,
+            heroImage2: row.hero_image_2 || null,
+            galleryImage1: row.gallery_image_1 || null,
+            galleryImage2: row.gallery_image_2 || null,
+            galleryImage3: row.gallery_image_3 || null,
+            safetyImage: row.safety_image || null
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load site settings.' });
+    }
+});
+
+// =====================================================================
 // PREMIUM CHECKOUT (real Stripe integration, opt-in via env vars)
 // =====================================================================
 app.post('/api/premium/checkout', authRequired, async (req, res) => {
@@ -501,6 +552,236 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
         }
     }
     res.json({ received: true });
+});
+
+// =====================================================================
+// ADMIN DASHBOARD
+// =====================================================================
+const adminAuth = [authRequired, adminRequired];
+
+function adminUserRow(row) {
+    return {
+        id: row.id,
+        name: row.name,
+        email: row.email,
+        age: calcAge(row.dob),
+        gender: row.gender,
+        location: row.location,
+        verified: row.verified,
+        isPremium: row.is_premium,
+        premiumTier: row.premium_tier,
+        isAdmin: row.is_admin,
+        banned: row.banned,
+        onboardingComplete: row.onboarding_complete,
+        photoCount: (row.photos || []).length,
+        createdAt: row.created_at
+    };
+}
+
+app.get('/api/admin/overview', adminAuth, async (req, res) => {
+    try {
+        const [users, verified, premium, admins, banned, matches, messages, newUsers] = await Promise.all([
+            pool.query('SELECT COUNT(*)::int AS c FROM users'),
+            pool.query('SELECT COUNT(*)::int AS c FROM users WHERE verified = TRUE'),
+            pool.query('SELECT COUNT(*)::int AS c FROM users WHERE is_premium = TRUE'),
+            pool.query('SELECT COUNT(*)::int AS c FROM users WHERE is_admin = TRUE'),
+            pool.query('SELECT COUNT(*)::int AS c FROM users WHERE banned = TRUE'),
+            pool.query('SELECT COUNT(*)::int AS c FROM matches'),
+            pool.query('SELECT COUNT(*)::int AS c FROM messages'),
+            pool.query(`SELECT COUNT(*)::int AS c FROM users WHERE created_at > NOW() - INTERVAL '7 days'`)
+        ]);
+        res.json({
+            totalUsers: users.rows[0].c,
+            verifiedUsers: verified.rows[0].c,
+            premiumUsers: premium.rows[0].c,
+            adminUsers: admins.rows[0].c,
+            bannedUsers: banned.rows[0].c,
+            totalMatches: matches.rows[0].c,
+            totalMessages: messages.rows[0].c,
+            newUsersLast7Days: newUsers.rows[0].c
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load overview.' });
+    }
+});
+
+app.get('/api/admin/users', adminAuth, async (req, res) => {
+    try {
+        const search = (req.query.search || '').trim();
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const pageSize = 25;
+        const offset = (page - 1) * pageSize;
+
+        let where = '';
+        const params = [];
+        if (search) {
+            params.push(`%${search}%`);
+            where = `WHERE name ILIKE $${params.length} OR email ILIKE $${params.length}`;
+        }
+        const countResult = await pool.query(`SELECT COUNT(*)::int AS c FROM users ${where}`, params);
+        params.push(pageSize, offset);
+        const result = await pool.query(
+            `SELECT * FROM users ${where} ORDER BY created_at DESC LIMIT $${params.length - 1} OFFSET $${params.length}`,
+            params
+        );
+        res.json({
+            users: result.rows.map(adminUserRow),
+            total: countResult.rows[0].c,
+            page,
+            pageSize
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load users.' });
+    }
+});
+
+app.put('/api/admin/users/:id', adminAuth, async (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        if (targetId === req.user.id) {
+            return res.status(400).json({ error: "You can't change your own account from the admin panel. Use Settings instead." });
+        }
+        const colMap = {
+            verified: 'verified',
+            isPremium: 'is_premium',
+            premiumTier: 'premium_tier',
+            isAdmin: 'is_admin',
+            banned: 'banned',
+            name: 'name',
+            location: 'location'
+        };
+        const sets = [];
+        const values = [];
+        let i = 1;
+        for (const key of Object.keys(colMap)) {
+            if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+                sets.push(`${colMap[key]} = $${i}`);
+                values.push(req.body[key]);
+                i++;
+            }
+        }
+        if (sets.length === 0) return res.status(400).json({ error: 'No valid fields to update.' });
+        values.push(targetId);
+        const result = await pool.query(`UPDATE users SET ${sets.join(', ')} WHERE id = $${i} RETURNING *`, values);
+        if (!result.rows[0]) return res.status(404).json({ error: 'User not found.' });
+        res.json({ user: adminUserRow(result.rows[0]) });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not update user.' });
+    }
+});
+
+app.delete('/api/admin/users/:id', adminAuth, async (req, res) => {
+    try {
+        const targetId = Number(req.params.id);
+        if (targetId === req.user.id) {
+            return res.status(400).json({ error: "You can't delete your own account from the admin panel." });
+        }
+        const result = await pool.query('DELETE FROM users WHERE id = $1 RETURNING id', [targetId]);
+        if (!result.rows[0]) return res.status(404).json({ error: 'User not found.' });
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not delete user.' });
+    }
+});
+
+app.get('/api/admin/matches', adminAuth, async (req, res) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const pageSize = 25;
+        const offset = (page - 1) * pageSize;
+        const countResult = await pool.query('SELECT COUNT(*)::int AS c FROM matches');
+        const result = await pool.query(
+            `SELECT m.id, m.created_at, u1.name AS user1_name, u1.email AS user1_email,
+                    u2.name AS user2_name, u2.email AS user2_email,
+                    (SELECT COUNT(*)::int FROM messages WHERE match_id = m.id) AS message_count
+             FROM matches m
+             JOIN users u1 ON u1.id = m.user1_id
+             JOIN users u2 ON u2.id = m.user2_id
+             ORDER BY m.created_at DESC LIMIT $1 OFFSET $2`,
+            [pageSize, offset]
+        );
+        res.json({
+            matches: result.rows.map(r => ({
+                id: r.id,
+                createdAt: r.created_at,
+                user1: { name: r.user1_name, email: r.user1_email },
+                user2: { name: r.user2_name, email: r.user2_email },
+                messageCount: r.message_count
+            })),
+            total: countResult.rows[0].c,
+            page,
+            pageSize
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load matches.' });
+    }
+});
+
+app.delete('/api/admin/matches/:id', adminAuth, async (req, res) => {
+    try {
+        const result = await pool.query('DELETE FROM matches WHERE id = $1 RETURNING id', [req.params.id]);
+        if (!result.rows[0]) return res.status(404).json({ error: 'Match not found.' });
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not delete match.' });
+    }
+});
+
+// ---- Site content (homepage images + hero copy) ----
+app.get('/api/admin/site-settings', adminAuth, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM site_settings WHERE id = 1');
+        res.json({ settings: result.rows[0] || {} });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not load site settings.' });
+    }
+});
+
+app.put('/api/admin/site-settings', adminAuth, async (req, res) => {
+    try {
+        const colMap = {
+            heroTitle: 'hero_title',
+            heroSubtitle: 'hero_subtitle',
+            heroImage1: 'hero_image_1',
+            heroImage2: 'hero_image_2',
+            galleryImage1: 'gallery_image_1',
+            galleryImage2: 'gallery_image_2',
+            galleryImage3: 'gallery_image_3',
+            safetyImage: 'safety_image'
+        };
+        const imageKeys = ['heroImage1', 'heroImage2', 'galleryImage1', 'galleryImage2', 'galleryImage3', 'safetyImage'];
+        const sets = [];
+        const values = [];
+        let i = 1;
+        for (const key of Object.keys(colMap)) {
+            if (Object.prototype.hasOwnProperty.call(req.body, key)) {
+                let val = req.body[key];
+                if (imageKeys.includes(key) && val && !val.startsWith('data:image/')) {
+                    return res.status(400).json({ error: `${key} must be a valid image.` });
+                }
+                sets.push(`${colMap[key]} = $${i}`);
+                values.push(val || null);
+                i++;
+            }
+        }
+        if (sets.length === 0) return res.status(400).json({ error: 'No valid fields to update.' });
+        sets.push('updated_at = NOW()');
+        const result = await pool.query(
+            `UPDATE site_settings SET ${sets.join(', ')} WHERE id = 1 RETURNING *`,
+            values
+        );
+        res.json({ settings: result.rows[0] });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Could not update site settings.' });
+    }
 });
 
 // =====================================================================
