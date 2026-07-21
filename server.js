@@ -127,6 +127,15 @@ async function authRequired(req, res, next) {
     }
 }
 
+// Matches + messaging are a Premium-only feature — free members can still swipe
+// and build up matches on the backend, but viewing/opening them requires a plan.
+function premiumRequired(req, res, next) {
+    if (!req.user.is_premium) {
+        return res.status(402).json({ error: 'Upgrade to Premium to view your matches and chat.', requiresUpgrade: true });
+    }
+    next();
+}
+
 async function getOrCreateMatchId(userAId, userBId) {
     const [u1, u2] = userAId < userBId ? [userAId, userBId] : [userBId, userAId];
     const existing = await pool.query('SELECT id FROM matches WHERE user1_id=$1 AND user2_id=$2', [u1, u2]);
@@ -353,7 +362,7 @@ app.post('/api/swipe', authRequired, async (req, res) => {
 // =====================================================================
 // MATCHES + MESSAGING
 // =====================================================================
-app.get('/api/matches', authRequired, async (req, res) => {
+app.get('/api/matches', authRequired, premiumRequired, async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT m.id AS match_id, m.created_at AS matched_at,
@@ -390,7 +399,7 @@ async function assertMatchMembership(matchId, userId) {
     return result.rows[0] || null;
 }
 
-app.get('/api/messages/:matchId', authRequired, async (req, res) => {
+app.get('/api/messages/:matchId', authRequired, premiumRequired, async (req, res) => {
     try {
         const match = await assertMatchMembership(req.params.matchId, req.user.id);
         if (!match) return res.status(403).json({ error: 'Not part of this match.' });
@@ -417,7 +426,7 @@ app.get('/api/messages/:matchId', authRequired, async (req, res) => {
     }
 });
 
-app.post('/api/messages/:matchId', authRequired, async (req, res) => {
+app.post('/api/messages/:matchId', authRequired, premiumRequired, async (req, res) => {
     try {
         const match = await assertMatchMembership(req.params.matchId, req.user.id);
         if (!match) return res.status(403).json({ error: 'Not part of this match.' });

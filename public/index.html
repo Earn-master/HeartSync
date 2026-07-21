@@ -1265,6 +1265,33 @@
         .btn-action-super { color: var(--secondary); border-color: rgba(108, 92, 231, 0.2); }
         .btn-action-super:hover { background-color: rgba(108, 92, 231, 0.1); }
 
+        /* Filter Dropdown (Discover page) */
+        .discover-toolbar {
+            position: relative;
+            display: flex;
+            justify-content: flex-end;
+            padding: 12px 16px 0;
+        }
+
+        .filter-dropdown-toggle {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-dropdown-panel {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 16px;
+            left: 16px;
+            z-index: 60;
+        }
+
+        .filter-dropdown-panel.open {
+            display: block;
+        }
+
         /* Filter Panel Drawer */
         .filter-sidebar {
             background-color: var(--bg-surface);
@@ -1272,6 +1299,47 @@
             padding: 24px;
             border: 1px solid var(--border);
             height: fit-content;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* Subscription plan badge */
+        .plan-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 14px;
+            border-radius: var(--radius-full);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            background-color: var(--bg-el);
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+
+        .plan-badge.plan-premium {
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+        }
+
+        /* Matches / Chat premium paywall */
+        .premium-gate {
+            text-align: center;
+            padding: 60px 24px;
+            max-width: 420px;
+            margin: 0 auto;
+        }
+
+        .premium-gate i.gate-icon {
+            font-size: 3rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            display: inline-block;
         }
 
         .filter-group {
@@ -2166,7 +2234,10 @@
                     <button class="btn btn-primary" style="width:100%" onclick="navigateTo('discover')"><i class="fa-solid fa-sparkles"></i> Start Discovering</button>
                 </div>
                 <div class="main-content-panel">
-                    <h2 style="margin-bottom:8px;">Welcome Back!</h2>
+                    <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:8px;">
+                        <h2 style="margin-bottom:0;">Welcome Back!</h2>
+                        <span class="plan-badge" id="dash-plan-badge" onclick="navigateTo('premium')" style="cursor:pointer;">Free Plan</span>
+                    </div>
                     <p style="color:var(--text-muted); margin-bottom:30px;">Here is what happened inside your profile network today.</p>
                     
                     <div class="dashboard-grid">
@@ -2205,9 +2276,12 @@
 
         <!-- --- 4. VIEW: DISCOVER CARD SWIPER --- -->
         <section id="view-discover" class="app-view">
-            <div class="dashboard-layout">
-                <!-- Filters Left Sidebar -->
-                <div class="sidebar-panel" style="display:block;">
+            <!-- Filters now live in a dropdown so the swipe deck is visible immediately -->
+            <div class="discover-toolbar">
+                <button class="btn btn-secondary filter-dropdown-toggle" id="filterDropdownToggle" onclick="toggleDiscoverFilters()" aria-expanded="false">
+                    <i class="fa-solid fa-sliders"></i> Filters
+                </button>
+                <div class="filter-dropdown-panel" id="discoverFilterPanel">
                     <div class="filter-sidebar">
                         <h3 style="margin-bottom:20px;"><i class="fa-solid fa-sliders"></i> Engine Filters</h3>
                         <div class="filter-group">
@@ -2230,30 +2304,30 @@
                         <button class="btn btn-secondary" style="width:100%; margin-top:10px;" onclick="applyFiltersMock()">Apply Settings</button>
                     </div>
                 </div>
-                <!-- Interactive Deck Panel -->
-                <div class="main-content-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                    <div class="discover-container">
-                        <!-- Loading State Frame -->
-                        <div class="skeleton-card" id="discoverSkeleton" style="display:none;">
-                            <div class="skeleton-img"></div>
-                            <div class="card-body-details">
-                                <div style="height:24px; background-color:var(--bg-el); width:60%; margin-bottom:12px; border-radius:4px;"></div>
-                                <div style="height:16px; background-color:var(--bg-el); width:85%; border-radius:4px;"></div>
-                            </div>
+            </div>
+            <!-- Interactive Deck Panel -->
+            <div class="main-content-panel" style="display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding-top:8px;">
+                <div class="discover-container">
+                    <!-- Loading State Frame -->
+                    <div class="skeleton-card" id="discoverSkeleton" style="display:none;">
+                        <div class="skeleton-img"></div>
+                        <div class="card-body-details">
+                            <div style="height:24px; background-color:var(--bg-el); width:60%; margin-bottom:12px; border-radius:4px;"></div>
+                            <div style="height:16px; background-color:var(--bg-el); width:85%; border-radius:4px;"></div>
                         </div>
+                    </div>
 
-                        <!-- Empty Card Deck State -->
-                        <div id="deckEmptyState" style="display:none; text-align:center; padding:100px 20px;">
-                            <i class="fa-solid fa-earth-americas" style="font-size:3.5rem; color:var(--text-muted); margin-bottom:20px;"></i>
-                            <h3>No New Profiles in Area</h3>
-                            <p style="color:var(--text-muted); margin-top:8px;">Try expansion adjustments on your structural distance or age parameters inside your filter configurations.</p>
-                            <button class="btn btn-primary" style="margin-top:20px;" onclick="resetDiscoverDeck()">Refresh Deck Stack</button>
-                        </div>
+                    <!-- Empty Card Deck State -->
+                    <div id="deckEmptyState" style="display:none; text-align:center; padding:100px 20px;">
+                        <i class="fa-solid fa-earth-americas" style="font-size:3.5rem; color:var(--text-muted); margin-bottom:20px;"></i>
+                        <h3>No New Profiles in Area</h3>
+                        <p style="color:var(--text-muted); margin-top:8px;">Try expansion adjustments on your structural distance or age parameters inside your filter configurations.</p>
+                        <button class="btn btn-primary" style="margin-top:20px;" onclick="resetDiscoverDeck()">Refresh Deck Stack</button>
+                    </div>
 
-                        <!-- Main Core Deck -->
-                        <div class="card-deck" id="cardDeckContainer">
-                            <!-- Injected Dynamically by State Controller Engine -->
-                        </div>
+                    <!-- Main Core Deck -->
+                    <div class="card-deck" id="cardDeckContainer">
+                        <!-- Injected Dynamically by State Controller Engine -->
                     </div>
                 </div>
             </div>
@@ -2262,10 +2336,19 @@
         <!-- --- 5. VIEW: MATCHES DISPLAY MATRIX --- -->
         <section id="view-matches" class="app-view">
             <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%;">
-                <h2 style="margin-bottom:12px;">Your Mutual Matches</h2>
-                <p style="color:var(--text-muted); margin-bottom:30px;">When profiles like each other mutually, connections lock open below.</p>
-                <div class="matches-grid" id="matchesMasterGrid">
-                    <!-- Dynamic Render Elements -->
+                <!-- Shown to non-Premium members instead of the real matches grid -->
+                <div class="premium-gate" id="matchesPremiumGate" style="display:none;">
+                    <i class="fa-solid fa-lock gate-icon"></i>
+                    <h3>Matches Are a Premium Feature</h3>
+                    <p style="color:var(--text-muted); margin-top:10px;">Upgrade your plan to see who you've matched with and start conversations.</p>
+                    <button class="btn btn-primary" style="margin-top:24px;" onclick="navigateTo('premium')">View Plans</button>
+                </div>
+                <div id="matchesContent">
+                    <h2 style="margin-bottom:12px;">Your Mutual Matches</h2>
+                    <p style="color:var(--text-muted); margin-bottom:30px;">When profiles like each other mutually, connections lock open below.</p>
+                    <div class="matches-grid" id="matchesMasterGrid">
+                        <!-- Dynamic Render Elements -->
+                    </div>
                 </div>
             </div>
         </section>
@@ -2273,7 +2356,14 @@
         <!-- --- 6. VIEW: MESSAGING CORE MODULE --- -->
         <section id="view-messages" class="app-view">
             <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%; padding:20px 0;">
-                <div class="messenger-layout">
+                <!-- Shown to non-Premium members instead of the real chat UI -->
+                <div class="premium-gate" id="messagesPremiumGate" style="display:none;">
+                    <i class="fa-solid fa-lock gate-icon"></i>
+                    <h3>Chat Is a Premium Feature</h3>
+                    <p style="color:var(--text-muted); margin-top:10px;">Upgrade your plan to message your matches.</p>
+                    <button class="btn btn-primary" style="margin-top:24px;" onclick="navigateTo('premium')">View Plans</button>
+                </div>
+                <div class="messenger-layout" id="messagesContent">
                     <!-- Sidebar list -->
                     <div class="chat-sidebar">
                         <div class="chat-search-box">
@@ -2672,11 +2762,21 @@
 
             if (viewId === 'dashboard') renderDashboardData();
             if (viewId === 'discover') loadDiscoverDeck();
-            if (viewId === 'matches') renderMatchesGrid();
+            if (viewId === 'matches') {
+                const unlocked = !!(state.user && state.user.isPremium);
+                document.getElementById('matchesPremiumGate').style.display = unlocked ? 'none' : 'block';
+                document.getElementById('matchesContent').style.display = unlocked ? 'block' : 'none';
+                if (unlocked) renderMatchesGrid();
+            }
             if (viewId === 'messages') {
-                renderConversationsList();
-                document.querySelector('.chat-sidebar').style.display = "flex";
-                document.getElementById('activeChatWindow').style.display = "none";
+                const unlocked = !!(state.user && state.user.isPremium);
+                document.getElementById('messagesPremiumGate').style.display = unlocked ? 'none' : 'block';
+                document.getElementById('messagesContent').style.display = unlocked ? 'flex' : 'none';
+                if (unlocked) {
+                    renderConversationsList();
+                    document.querySelector('.chat-sidebar').style.display = "flex";
+                    document.getElementById('activeChatWindow').style.display = "none";
+                }
             }
             if (viewId === 'settings') populateSettingsForm();
             if (viewId === 'premium') initPremiumPaymentMethods();
@@ -2761,7 +2861,24 @@
             navAvatar.style.display = "block";
             document.getElementById('nav-avatar-img').src = user.avatar || fallbackAvatar(user.name);
             connectSocket();
+            renderPlanBadge();
             if (isFresh) showToast("Welcome!", `Signed in as ${user.name}.`, "fa-circle-check");
+        }
+
+        /* ---------------- SUBSCRIPTION PLAN VISIBILITY ---------------- */
+        const PLAN_LABELS = { plus: 'Spark Plan', gold: 'Gold Plan', platinum: 'Platinum Plan' };
+
+        function currentPlanLabel() {
+            if (!state.user) return 'Free Plan';
+            if (!state.user.isPremium) return 'Free Plan';
+            return PLAN_LABELS[state.user.premiumTier] || 'Premium Plan';
+        }
+
+        function renderPlanBadge() {
+            const badge = document.getElementById('dash-plan-badge');
+            if (!badge || !state.user) return;
+            badge.innerText = currentPlanLabel();
+            badge.classList.toggle('plan-premium', !!state.user.isPremium);
         }
 
         function logout() {
@@ -2788,7 +2905,7 @@
             state.socket.on('new_match', (payload) => {
                 showToast("It's a Match! 🎉", `You and ${payload.profile.name} liked each other.`, "fa-heart");
                 state.notifications.unshift({ text: `Mutual connection made with ${payload.profile.name}!`, time: "Just now", icon: "fa-heart", bg: "var(--primary-light)" });
-                if (state.currentView === 'matches') renderMatchesGrid();
+                if (state.currentView === 'matches' && isPremiumUser()) renderMatchesGrid();
                 if (state.currentView === 'dashboard') renderDashboardData();
             });
 
@@ -2798,12 +2915,16 @@
                 } else {
                     showToast("New Message", payload.text, "fa-comment");
                 }
-                if (state.currentView === 'messages') renderConversationsList();
+                if (state.currentView === 'messages' && isPremiumUser()) renderConversationsList();
             });
 
             state.socket.on('inbox_update', () => {
-                if (state.currentView === 'messages') renderConversationsList();
+                if (state.currentView === 'messages' && isPremiumUser()) renderConversationsList();
             });
+        }
+
+        function isPremiumUser() {
+            return !!(state.user && state.user.isPremium);
         }
 
         /* ---------------- ONBOARDING ---------------- */
@@ -2942,6 +3063,7 @@
             document.getElementById('dash-user-avatar').src = state.user.avatar || fallbackAvatar(state.user.name);
             document.getElementById('dash-user-name').innerText = `${state.user.name}, ${state.user.age || '—'}`;
             document.getElementById('dash-user-location').innerText = state.user.location || "Add your location in Settings";
+            renderPlanBadge();
 
             try {
                 const stats = await apiFetch('/api/stats');
@@ -3011,7 +3133,29 @@
         function applyFiltersMock() {
             showToast("Filters Applied", "Your discovery deck has been refreshed.", "fa-sliders");
             loadDiscoverDeck();
+            closeDiscoverFilters();
         }
+
+        function toggleDiscoverFilters() {
+            const panel = document.getElementById('discoverFilterPanel');
+            const toggle = document.getElementById('filterDropdownToggle');
+            const isOpen = panel.classList.toggle('open');
+            toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+        }
+
+        function closeDiscoverFilters() {
+            document.getElementById('discoverFilterPanel').classList.remove('open');
+            document.getElementById('filterDropdownToggle').setAttribute('aria-expanded', 'false');
+        }
+
+        // Close the filter dropdown when tapping/clicking outside of it.
+        document.addEventListener('click', (event) => {
+            const panel = document.getElementById('discoverFilterPanel');
+            const toggle = document.getElementById('filterDropdownToggle');
+            if (!panel || !panel.classList.contains('open')) return;
+            if (panel.contains(event.target) || toggle.contains(event.target)) return;
+            closeDiscoverFilters();
+        });
 
         function resetDiscoverDeck() {
             loadDiscoverDeck();
@@ -3377,7 +3521,27 @@
             document.getElementById(paneId).classList.add('active-pane');
         }
 
+        function updatePremiumPlanButtons() {
+            const activeTier = state.user && state.user.isPremium ? state.user.premiumTier : 'free';
+            ['plus', 'gold', 'platinum'].forEach(tier => {
+                const btn = document.getElementById(`premium-btn-${tier}`);
+                if (!btn) return;
+                if (tier === activeTier) {
+                    btn.innerText = "Current Plan";
+                    btn.disabled = true;
+                    btn.classList.remove('btn-primary');
+                    btn.classList.add('btn-secondary');
+                } else {
+                    btn.innerText = "Upgrade Account";
+                    btn.disabled = false;
+                    btn.classList.remove('btn-secondary');
+                    btn.classList.add('btn-primary');
+                }
+            });
+        }
+
         async function initPremiumPaymentMethods() {
+            updatePremiumPlanButtons();
             await loadPaystackBanks();
             await loadMyGiftcards();
         }
@@ -3420,7 +3584,7 @@
                 document.getElementById('pm-ussd-code').innerText = data.ussdCode || "Check your phone";
                 document.getElementById('pm-ussd-status').innerText = data.displayText || "Waiting for payment confirmation…";
                 document.getElementById('pm-ussd-result').style.display = "block";
-                pollPaystackVerification(data.reference);
+                pollPaystackVerification(data.reference, tier);
             } catch (err) {
                 showToast("USSD Payment Unavailable", err.message, "fa-triangle-exclamation");
             } finally {
@@ -3429,7 +3593,7 @@
             }
         }
 
-        function pollPaystackVerification(reference) {
+        function pollPaystackVerification(reference, tier) {
             if (pmPaystackPollTimer) clearInterval(pmPaystackPollTimer);
             const statusEl = document.getElementById('pm-ussd-status');
             pmPaystackPollTimer = setInterval(async () => {
@@ -3439,7 +3603,9 @@
                         clearInterval(pmPaystackPollTimer);
                         pmPaystackPollTimer = null;
                         statusEl.innerText = "Payment confirmed! Your account is now Premium.";
-                        if (state.user) state.user.isPremium = true;
+                        if (state.user) { state.user.isPremium = true; state.user.premiumTier = tier; }
+                        renderPlanBadge();
+                        updatePremiumPlanButtons();
                         showToast("Payment Successful", "Your Premium plan is now active.", "fa-circle-check");
                     } else if (data.status === 'failed') {
                         clearInterval(pmPaystackPollTimer);
