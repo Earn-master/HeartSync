@@ -16,6 +16,9 @@ if (!JWT_SECRET) {
 
 const PORT = process.env.PORT || 3000;
 const MAX_PHOTOS = 6;
+// Free (non-premium) members get a fixed number of lifetime swipes on Discover.
+// Once they hit it, the swipe endpoint refuses further swipes until they upgrade.
+const FREE_SWIPE_LIMIT = 10;
 
 // The admin dashboard is a fully separate system from regular user accounts —
 // admins are their own table, log in with a username + password only (never
@@ -139,6 +142,11 @@ function premiumRequired(req, res, next) {
         return res.status(402).json({ error: 'Upgrade to Premium to view your matches and chat.', requiresUpgrade: true });
     }
     next();
+}
+
+async function getSwipeCount(userId) {
+    const result = await pool.query('SELECT COUNT(*)::int AS c FROM swipes WHERE swiper_id = $1', [userId]);
+    return result.rows[0].c;
 }
 
 async function getOrCreateMatchId(userAId, userBId) {
@@ -285,6 +293,22 @@ app.delete('/api/me', authRequired, async (req, res) => {
 app.get('/api/discover', authRequired, async (req, res) => {
     try {
         const me = req.user;
+
+        // Free members only get FREE_SWIPE_LIMIT lifetime swipes. Once they've
+        // used them all up there's no point loading fresh profiles to show —
+        // the client shows the upgrade paywall instead of the card deck.
+        const swipesUsed = me.is_premium ? 0 : await getSwipeCount(me.id);
+        const limitReached = !me.is_premium && swipesUsed >= FREE_SWIPE_LIMIT;
+
+        if (limitReached) {
+            return res.json({
+                profiles: [],
+                swipesUsed,
+                swipeLimit: FREE_SWIPE_LIMIT,
+                limitReached: true
+            });
+        }
+
         const params = [me.id];
         let genderFilter = '';
         if (me.interested_in && me.interested_in !== 'Everyone') {
@@ -305,7 +329,12 @@ app.get('/api/discover', authRequired, async (req, res) => {
              LIMIT 30`,
             params
         );
-        res.json({ profiles: result.rows.map(publicProfile) });
+        res.json({
+            profiles: result.rows.map(publicProfile),
+            swipesUsed,
+            swipeLimit: me.is_premium ? null : FREE_SWIPE_LIMIT,
+            limitReached: false
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Could not load profiles.' });
@@ -319,6 +348,20 @@ app.post('/api/swipe', authRequired, async (req, res) => {
             return res.status(400).json({ error: 'A target profile and valid action are required.' });
         }
         if (Number(targetId) === req.user.id) return res.status(400).json({ error: 'You cannot swipe on yourself.' });
+
+        // Enforce the free-tier lifetime swipe cap. Premium members are unlimited.
+        if (!req.user.is_premium) {
+            const swipesUsed = await getSwipeCount(req.user.id);
+            if (swipesUsed >= FREE_SWIPE_LIMIT) {
+                return res.status(402).json({
+                    error: `You've used all ${FREE_SWIPE_LIMIT} of your free swipes. Upgrade to Premium for unlimited swiping.`,
+                    requiresUpgrade: true,
+                    swipesUsed,
+                    swipeLimit: FREE_SWIPE_LIMIT,
+                    limitReached: true
+                });
+            }
+        }
 
         const targetResult = await pool.query('SELECT * FROM users WHERE id = $1', [targetId]);
         const target = targetResult.rows[0];
@@ -357,7 +400,19 @@ app.post('/api/swipe', authRequired, async (req, res) => {
             }
         }
 
-        res.json({ matched, matchId, matchedProfile: matched ? publicProfile(target) : null });
+        let swipesUsed = null;
+        if (!req.user.is_premium) {
+            swipesUsed = await getSwipeCount(req.user.id);
+        }
+
+        res.json({
+            matched,
+            matchId,
+            matchedProfile: matched ? publicProfile(target) : null,
+            swipesUsed,
+            swipeLimit: req.user.is_premium ? null : FREE_SWIPE_LIMIT,
+            limitReached: req.user.is_premium ? false : swipesUsed >= FREE_SWIPE_LIMIT
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Could not process swipe.' });

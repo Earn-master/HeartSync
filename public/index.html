@@ -2232,6 +2232,17 @@
         </div>
     </div>
 
+    <!-- --- FREE SWIPE LIMIT: SUBSCRIPTION PAYWALL POP-UP --- -->
+    <div class="modal-overlay" id="swipeLimitModalOverlay">
+        <div class="auth-modal" style="text-align:center;">
+            <button class="close-modal" onclick="closeSwipeLimitModal()"><i class="fa-solid fa-xmark"></i></button>
+            <i class="fa-solid fa-heart-circle-exclamation" style="font-size:2.75rem; color:var(--primary); margin-bottom:16px;"></i>
+            <h3 class="auth-title">You've Used All 10 Free Swipes</h3>
+            <p style="color:var(--text-muted); font-size:0.9rem; margin-bottom:22px;">Subscribing unlocks unlimited swipes on Discover, so you never run out of new people to meet.</p>
+            <button class="btn btn-primary" style="width:100%;" onclick="goToPremiumFromSwipeLimit()">See Premium Plans</button>
+        </div>
+    </div>
+
     <!-- --- PREMIUM UPGRADE: PAYMENT METHOD POP-UP --- -->
     <div class="modal-overlay" id="premiumModalOverlay">
         <div class="auth-modal premium-modal">
@@ -2712,6 +2723,14 @@
                         <button class="btn btn-primary" style="margin-top:20px;" onclick="resetDiscoverDeck()">Refresh Deck Stack</button>
                     </div>
 
+                    <!-- Free Swipe Limit Reached State -->
+                    <div id="swipeLimitBlock" style="display:none; text-align:center; padding:80px 24px;">
+                        <i class="fa-solid fa-heart-circle-exclamation" style="font-size:3.5rem; color:var(--primary); margin-bottom:20px;"></i>
+                        <h3>You're Out of Free Swipes</h3>
+                        <p style="color:var(--text-muted); margin-top:8px;">Free members get 10 swipes on Discover. Upgrade to Premium for unlimited swiping and to keep meeting new people.</p>
+                        <button class="btn btn-primary" style="margin-top:20px;" onclick="openSwipeLimitModal()">Upgrade to Keep Swiping</button>
+                    </div>
+
                     <!-- Main Core Deck -->
                     <div class="card-deck" id="cardDeckContainer">
                         <!-- Injected Dynamically by State Controller Engine -->
@@ -2972,6 +2991,7 @@
             authMode: "signup",
             onboardingStep: 1,
             discoverProfiles: [],
+            swipeInfo: { swipesUsed: 0, swipeLimit: null, limitReached: false },
             matches: [],
             activeChatId: null,
             activeChatMatch: null,
@@ -2996,6 +3016,7 @@
             if (!res.ok) {
                 const err = new Error(data.error || 'Something went wrong.');
                 err.status = res.status;
+                err.data = data;
                 throw err;
             }
             return data;
@@ -3645,10 +3666,12 @@
             emptyState.style.display = "none";
 
             try {
-                const { profiles } = await apiFetch('/api/discover');
+                const { profiles, swipesUsed, swipeLimit, limitReached } = await apiFetch('/api/discover');
+                state.swipeInfo = { swipesUsed: swipesUsed || 0, swipeLimit: swipeLimit != null ? swipeLimit : null, limitReached: !!limitReached };
                 state.discoverProfiles = applyClientFilters(profiles);
                 skeleton.style.display = "none";
                 renderDiscoverDeck();
+                if (state.swipeInfo.limitReached) openSwipeLimitModal();
             } catch (err) {
                 skeleton.style.display = "none";
                 showToast("Couldn't Load Profiles", err.message, "fa-triangle-exclamation");
@@ -3701,7 +3724,15 @@
         function renderDiscoverDeck() {
             const container = document.getElementById('cardDeckContainer');
             const emptyState = document.getElementById('deckEmptyState');
+            const limitBlock = document.getElementById('swipeLimitBlock');
             container.innerHTML = "";
+
+            if (state.swipeInfo.limitReached) {
+                emptyState.style.display = "none";
+                limitBlock.style.display = "block";
+                return;
+            }
+            limitBlock.style.display = "none";
 
             if (state.discoverProfiles.length === 0) {
                 emptyState.style.display = "block";
@@ -3746,6 +3777,8 @@
 
         async function executeSwipeAction(action, id, event) {
             if (event) event.stopPropagation();
+            if (state.swipeInfo.limitReached) { openSwipeLimitModal(); return; }
+
             const container = document.getElementById('cardDeckContainer');
             const topCard = container.querySelector('.profile-card');
             if (!topCard) return;
@@ -3759,20 +3792,51 @@
 
             try {
                 const result = await apiFetch('/api/swipe', { method: 'POST', body: JSON.stringify({ targetId: id, action }) });
+                if (result.swipeLimit != null || result.limitReached) {
+                    state.swipeInfo = {
+                        swipesUsed: result.swipesUsed != null ? result.swipesUsed : state.swipeInfo.swipesUsed,
+                        swipeLimit: result.swipeLimit,
+                        limitReached: !!result.limitReached
+                    };
+                }
                 setTimeout(() => {
                     state.discoverProfiles = state.discoverProfiles.filter(p => p.id !== id);
                     if (result.matched) {
                         showToast("It's a Match! 🎉", `You and ${result.matchedProfile.name} liked each other.`, "fa-heart");
                     }
                     renderDiscoverDeck();
+                    if (state.swipeInfo.limitReached) openSwipeLimitModal();
                 }, 300);
             } catch (err) {
                 setTimeout(() => {
                     topCard.style.transform = "";
                     topCard.style.opacity = "1";
-                    showToast("Swipe Failed", err.message, "fa-triangle-exclamation");
+                    if (err.status === 402) {
+                        state.swipeInfo = {
+                            swipesUsed: err.data && err.data.swipesUsed != null ? err.data.swipesUsed : state.swipeInfo.swipesUsed,
+                            swipeLimit: (err.data && err.data.swipeLimit) || state.swipeInfo.swipeLimit,
+                            limitReached: true
+                        };
+                        renderDiscoverDeck();
+                        openSwipeLimitModal();
+                    } else {
+                        showToast("Swipe Failed", err.message, "fa-triangle-exclamation");
+                    }
                 }, 300);
             }
+        }
+
+        function openSwipeLimitModal() {
+            document.getElementById('swipeLimitModalOverlay').style.display = 'flex';
+        }
+
+        function closeSwipeLimitModal() {
+            document.getElementById('swipeLimitModalOverlay').style.display = 'none';
+        }
+
+        function goToPremiumFromSwipeLimit() {
+            closeSwipeLimitModal();
+            navigateTo('premium');
         }
 
         /* ---------------- MATCHES ---------------- */
