@@ -37,6 +37,17 @@
     label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 6px; letter-spacing: 0.02em; text-transform: uppercase; }
     .field { margin-bottom: 16px; }
 
+    /* Password show/hide preview */
+    .password-field { position: relative; }
+    .password-field input { padding-right: 40px; }
+    .password-toggle-btn {
+        position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+        width: 30px; height: 30px; display: flex; align-items: center; justify-content: center;
+        background: none; border: none; cursor: pointer; color: var(--muted); border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+    .password-toggle-btn:hover { color: var(--text); background: var(--panel-2); }
+
     .btn {
         display: inline-flex; align-items: center; gap: 8px; justify-content: center;
         border: 1px solid var(--border); background: var(--panel-2); color: var(--text);
@@ -182,7 +193,10 @@
             </div>
             <div class="field">
                 <label>Password</label>
-                <input type="password" id="login-password" autocomplete="current-password" required>
+                <div class="password-field">
+                    <input type="password" id="login-password" autocomplete="current-password" required>
+                    <button type="button" class="password-toggle-btn" tabindex="-1" aria-label="Show password" onclick="togglePasswordVisibility('login-password', this)"><i class="fa-solid fa-eye"></i></button>
+                </div>
             </div>
             <button type="submit" class="btn btn-accent" style="width:100%;" id="loginSubmitBtn">
                 <i class="fa-solid fa-right-to-bracket"></i> Sign In
@@ -300,7 +314,7 @@
                     <h3>Add Admin</h3>
                     <div style="display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap;">
                         <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><label>Username</label><input type="text" id="newAdminUsername"></div>
-                        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><label>Password</label><input type="password" id="newAdminPassword"></div>
+                        <div class="field" style="flex:1; min-width:160px; margin-bottom:0;"><label>Password</label><div class="password-field"><input type="password" id="newAdminPassword"><button type="button" class="password-toggle-btn" tabindex="-1" aria-label="Show password" onclick="togglePasswordVisibility('newAdminPassword', this)"><i class="fa-solid fa-eye"></i></button></div></div>
                         <button class="btn btn-accent" onclick="createAdmin()"><i class="fa-solid fa-user-plus"></i> Create Admin</button>
                     </div>
                 </div>
@@ -319,8 +333,8 @@
             <div class="page" id="page-account">
                 <div class="page-head"><div><h2>My Account</h2><p>Update your own admin password.</p></div></div>
                 <div class="panel" style="max-width:420px;">
-                    <div class="field"><label>Current Password</label><input type="password" id="acct-current-password"></div>
-                    <div class="field"><label>New Password</label><input type="password" id="acct-new-password"></div>
+                    <div class="field"><label>Current Password</label><div class="password-field"><input type="password" id="acct-current-password"><button type="button" class="password-toggle-btn" tabindex="-1" aria-label="Show password" onclick="togglePasswordVisibility('acct-current-password', this)"><i class="fa-solid fa-eye"></i></button></div></div>
+                    <div class="field"><label>New Password</label><div class="password-field"><input type="password" id="acct-new-password"><button type="button" class="password-toggle-btn" tabindex="-1" aria-label="Show password" onclick="togglePasswordVisibility('acct-new-password', this)"><i class="fa-solid fa-eye"></i></button></div></div>
                     <button class="btn btn-accent" onclick="changeMyPassword()"><i class="fa-solid fa-key"></i> Update Password</button>
                 </div>
             </div>
@@ -365,6 +379,20 @@
         toast.innerHTML = `<strong>${escapeHtml(title)}</strong><span>${escapeHtml(message)}</span>`;
         stack.appendChild(toast);
         setTimeout(() => toast.remove(), 5000);
+    }
+
+    /* ---------------- PASSWORD PREVIEW TOGGLE ---------------- */
+    function togglePasswordVisibility(inputId, btn) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        const willShow = input.type === 'password';
+        input.type = willShow ? 'text' : 'password';
+        const icon = btn.querySelector('i');
+        if (icon) {
+            icon.classList.toggle('fa-eye', !willShow);
+            icon.classList.toggle('fa-eye-slash', willShow);
+        }
+        btn.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
     }
 
     /* ---------------- BOOTSTRAP ---------------- */

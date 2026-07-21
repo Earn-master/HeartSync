@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#8C2F39">
+    <meta name="theme-color" content="#ff4b72">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -11,61 +11,46 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,400..600&family=Work+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
         :root {
-            --primary: #8C2F39;
-            --primary-hover: #6F2430;
-            --primary-light: rgba(140, 47, 57, 0.1);
-            --secondary: #46548C;
-            --secondary-hover: #333F6B;
-            --accent: #C98A3E;
-            --accent-hover: #A16C2E;
-            --danger: #B3413A;
-            --danger-hover: #8F332D;
-            --danger-light: rgba(179, 65, 58, 0.1);
+            --primary: #ff4b72;
+            --primary-hover: #e03a5f;
+            --primary-light: rgba(255, 75, 114, 0.1);
+            --secondary: #6c5ce7;
+            --secondary-hover: #5b4cc4;
+            --accent: #00cec9;
             
             /* Light Mode Variables */
-            --bg-body: #F6F1EB;
-            --bg-surface: #FFFDFB;
-            --bg-el: #EDE5DA;
-            --text-main: #241C1E;
-            --text-muted: #7A6F68;
-            --border: #E4DAD0;
-            --shadow-sm: 0 2px 8px rgba(43,23,20,0.05);
-            --shadow-md: 0 8px 24px rgba(43,23,20,0.09);
-            --shadow-lg: 0 16px 40px rgba(43,23,20,0.14);
+            --bg-body: #f8f9fa;
+            --bg-surface: #ffffff;
+            --bg-el: #f1f3f5;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --border: #e9ecef;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.08);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.12);
             --radius-sm: 8px;
             --radius-md: 16px;
             --radius-lg: 24px;
             --radius-full: 9999px;
-            --radius-btn: 10px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         [data-theme="dark"] {
-            --primary: #C1495A;
-            --primary-hover: #D9645C;
-            --primary-light: rgba(193, 73, 90, 0.16);
-            --secondary: #8B9DD1;
-            --secondary-hover: #A6B5E0;
-            --accent: #E3AE64;
-            --accent-hover: #EFC385;
-            --danger: #D9645C;
-            --danger-hover: #E38078;
-            --danger-light: rgba(217, 100, 92, 0.16);
-            --bg-body: #171114;
-            --bg-surface: #221A1D;
-            --bg-el: #2C2226;
-            --text-main: #F5EDE8;
-            --text-muted: #B5A69E;
-            --border: #3A2C2F;
-            --shadow-sm: 0 2px 8px rgba(0,0,0,0.25);
-            --shadow-md: 0 8px 24px rgba(0,0,0,0.35);
-            --shadow-lg: 0 16px 40px rgba(0,0,0,0.45);
+            --bg-body: #0f1115;
+            --bg-surface: #161920;
+            --bg-el: #212631;
+            --text-main: #f8f9fa;
+            --text-muted: #a0aec0;
+            --border: #2d3545;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.2);
+            --shadow-md: 0 8px 24px rgba(0,0,0,0.3);
+            --shadow-lg: 0 16px 40px rgba(0,0,0,0.4);
         }
 
         * {
@@ -75,7 +60,7 @@
         }
 
         body {
-            font-family: 'Work Sans', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
             color: var(--text-main);
             transition: background-color 0.3s, color 0.3s;
@@ -84,26 +69,8 @@
         }
 
         h1, h2, h3, h4, h5, h6 {
-            font-family: 'Fraunces', serif;
-            font-optical-sizing: auto;
-            font-weight: 600;
-            letter-spacing: -0.01em;
-        }
-
-        /* Data readouts: numerals that report something measured — ages, counts,
-           prices, plan status — get the mono treatment so the "intentional
-           matching" language in the copy has a visual counterpart. */
-        .mono-readout {
-            font-family: 'IBM Plex Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
-        }
-
-        /* Applied directly to existing measured-value elements sitewide */
-        #dash-matches-count, #dash-likes-count, #dash-completion-pct,
-        .stat-item strong, .price-amt, .plan-badge {
-            font-family: 'IBM Plex Mono', monospace;
-            font-variant-numeric: tabular-nums;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-weight: 700;
         }
 
         a {
@@ -129,20 +96,19 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            padding: 11px 24px;
-            border-radius: var(--radius-btn);
+            padding: 10px 24px;
+            border-radius: var(--radius-full);
             font-weight: 600;
-            letter-spacing: 0.01em;
             transition: var(--transition);
         }
         .btn-primary {
-            background: linear-gradient(135deg, var(--primary), #B5525F);
+            background: linear-gradient(135deg, var(--primary), #ff6b8b);
             color: white;
-            box-shadow: 0 4px 15px rgba(140, 47, 57, 0.3);
+            box-shadow: 0 4px 15px rgba(255, 75, 114, 0.3);
         }
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(140, 47, 57, 0.4);
+            box-shadow: 0 6px 20px rgba(255, 75, 114, 0.4);
         }
         .btn-secondary {
             background-color: var(--bg-el);
@@ -217,7 +183,7 @@
 
         .toast-body strong {
             display: block;
-            font-family: 'Fraunces', serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 0.9rem;
             margin-bottom: 2px;
         }
@@ -259,9 +225,9 @@
 
         .stat-item strong {
             display: block;
-            font-family: 'Fraunces', serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 2.1rem;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
         }
@@ -293,7 +259,7 @@
             align-items: center;
             justify-content: space-between;
             padding: 18px 20px;
-            font-family: 'Fraunces', serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-weight: 600;
             text-align: left;
         }
@@ -348,11 +314,10 @@
         }
         
         .nav-brand {
-            font-family: 'Fraunces', serif;
-            font-size: 1.2rem;
-            font-weight: 700;
-            letter-spacing: -0.01em;
-            background: linear-gradient(135deg, var(--primary), var(--accent));
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             display: flex;
@@ -479,7 +444,7 @@
             align-items: center;
             justify-content: space-between;
             background: radial-gradient(circle at 80% 20%, var(--primary-light), transparent 45%),
-                        radial-gradient(circle at 10% 80%, rgba(70, 84, 140, 0.08), transparent 45%);
+                        radial-gradient(circle at 10% 80%, rgba(108, 92, 231, 0.08), transparent 45%);
             gap: 40px;
         }
 
@@ -487,35 +452,17 @@
             max-width: 600px;
         }
 
-        .hero-content::before {
-            content: "Considered Matching — Not Superficial Swiping";
-            display: block;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.72rem;
-            font-weight: 500;
-            letter-spacing: 0.09em;
-            text-transform: uppercase;
-            color: var(--accent-hover);
-            margin-bottom: 18px;
-        }
-
-        [data-theme="dark"] .hero-content::before {
-            color: var(--accent);
-        }
-
         .hero-content h1 {
-            font-size: 3.75rem;
-            font-weight: 600;
-            line-height: 1.08;
+            font-size: 3.5rem;
+            line-height: 1.15;
             margin-bottom: 24px;
-            letter-spacing: -0.015em;
+            letter-spacing: -1px;
         }
 
         .hero-content p {
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             color: var(--text-muted);
             margin-bottom: 36px;
-            max-width: 46ch;
         }
 
         .hero-graphics {
@@ -653,7 +600,7 @@
 
         .gallery-caption strong {
             display: block;
-            font-family: 'Fraunces', serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             font-size: 1rem;
         }
 
@@ -866,7 +813,7 @@
         .admin-stat-card strong {
             display: block;
             font-size: 1.6rem;
-            font-family: 'Fraunces', serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
         }
         .admin-stat-card span {
             color: var(--text-muted);
@@ -911,9 +858,9 @@
             font-size: 0.72rem;
             font-weight: 600;
         }
-        .admin-badge.on { background: rgba(201,138,62,0.15); color: #A16C2E; }
+        .admin-badge.on { background: rgba(0,206,201,0.15); color: #00a19d; }
         .admin-badge.off { background: var(--bg-el); color: var(--text-muted); }
-        .admin-badge.danger { background: var(--danger-light); color: var(--danger); }
+        .admin-badge.danger { background: rgba(255,75,114,0.15); color: var(--primary); }
         .admin-row-actions { display: flex; gap: 6px; flex-wrap: wrap; }
         .admin-row-actions button {
             font-size: 0.72rem;
@@ -924,7 +871,7 @@
             color: var(--text-main);
         }
         .admin-row-actions button:hover { background: var(--border); }
-        .admin-row-actions button.danger { color: var(--danger); border-color: rgba(179, 65, 58, 0.3); }
+        .admin-row-actions button.danger { color: var(--primary); border-color: rgba(255,75,114,0.3); }
         .admin-pagination { display: flex; gap: 10px; align-items: center; justify-content: center; margin-top: 16px; }
         .site-image-grid {
             display: grid;
@@ -1060,6 +1007,38 @@
             box-shadow: 0 0 0 3px var(--primary-light);
         }
 
+        /* Password show/hide preview */
+        .password-field {
+            position: relative;
+        }
+
+        .password-field .form-control {
+            padding-right: 44px;
+        }
+
+        .password-toggle-btn {
+            position: absolute;
+            right: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--text-muted);
+            border-radius: var(--radius-full);
+            transition: var(--transition);
+        }
+
+        .password-toggle-btn:hover {
+            color: var(--text-main);
+            background-color: var(--bg-el);
+        }
+
         /* Onboarding Wizard */
         .onboarding-container {
             max-width: 600px;
@@ -1094,6 +1073,73 @@
         .onboarding-step.active-step {
             display: block;
             animation: fadeIn 0.4s ease;
+        }
+
+        /* Scrollable Date-of-Birth Picker */
+        .scroll-date-picker {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            gap: 6px;
+            height: 200px;
+            padding: 0 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background-color: var(--bg-body);
+            overflow: hidden;
+        }
+
+        .scroll-date-col {
+            flex: 1;
+            max-width: 120px;
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+            text-align: center;
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 32%, black 68%, transparent);
+            mask-image: linear-gradient(to bottom, transparent, black 32%, black 68%, transparent);
+        }
+
+        .scroll-date-col::-webkit-scrollbar {
+            display: none;
+        }
+
+        .scroll-item, .scroll-pad {
+            height: 40px;
+            line-height: 40px;
+            scroll-snap-align: center;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            user-select: none;
+            transition: var(--transition);
+        }
+
+        .scroll-item.active {
+            color: var(--text-main);
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .scroll-date-highlight {
+            position: absolute;
+            top: 50%;
+            left: 10px;
+            right: 10px;
+            height: 40px;
+            transform: translateY(-50%);
+            border-top: 2px solid var(--primary);
+            border-bottom: 2px solid var(--primary);
+            background-color: var(--primary-light);
+            border-radius: 8px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .scroll-date-col {
+            position: relative;
+            z-index: 1;
         }
 
         .tag-selector {
@@ -1294,7 +1340,7 @@
         }
 
         .verified-badge {
-            color: var(--accent);
+            color: #00cec9;
             font-size: 1.1rem;
         }
 
@@ -1311,12 +1357,12 @@
             margin-top: 24px;
         }
 
-        .btn-action-pass { color: var(--danger); border-color: var(--danger-light); }
+        .btn-action-pass { color: #ff7675; border-color: rgba(255, 118, 117, 0.2); }
         .btn-action-pass:hover { background-color: rgba(255, 118, 117, 0.1); }
         .btn-action-like { color: #2ecc71; border-color: rgba(46, 204, 113, 0.2); }
         .btn-action-like:hover { background-color: rgba(46, 204, 113, 0.1); }
-        .btn-action-super { color: var(--secondary); border-color: rgba(70, 84, 140, 0.2); }
-        .btn-action-super:hover { background-color: rgba(70, 84, 140, 0.1); }
+        .btn-action-super { color: var(--secondary); border-color: rgba(108, 92, 231, 0.2); }
+        .btn-action-super:hover { background-color: rgba(108, 92, 231, 0.1); }
 
         /* Filter Dropdown (Discover page) */
         .discover-toolbar {
@@ -1377,12 +1423,36 @@
             border: none;
         }
 
-        /* Matches / Chat premium paywall */
+        /* Matches / Chat premium paywall — glassmorphism */
         .premium-gate {
+            position: relative;
             text-align: center;
-            padding: 60px 24px;
-            max-width: 420px;
-            margin: 0 auto;
+            padding: 56px 32px;
+            max-width: 440px;
+            margin: 40px auto;
+            border-radius: var(--radius-lg);
+            background-color: rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        [data-theme="dark"] .premium-gate {
+            background-color: rgba(22, 25, 32, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .premium-gate::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            z-index: -1;
+            background-image:
+                radial-gradient(circle at 18% 25%, var(--primary-light), transparent 45%),
+                radial-gradient(circle at 82% 75%, rgba(108, 92, 231, 0.18), transparent 45%);
         }
 
         .premium-gate i.gate-icon {
@@ -1393,6 +1463,59 @@
             color: transparent;
             margin-bottom: 20px;
             display: inline-block;
+        }
+
+        /* Blurred "someone's waiting" preview row */
+        .gate-ghost-row {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 22px;
+            filter: blur(3px);
+            opacity: 0.65;
+        }
+
+        .gate-ghost-avatar {
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border: 3px solid var(--bg-surface);
+            margin-left: -16px;
+        }
+
+        .gate-ghost-avatar:first-child {
+            margin-left: 0;
+        }
+
+        .gate-ghost-avatar:nth-child(2) { opacity: 0.85; }
+        .gate-ghost-avatar:nth-child(3) { opacity: 0.7; }
+
+        /* Live hint pill — teases real, unlocked data underneath the blur */
+        .gate-hint-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+            font-size: 0.85rem;
+            padding: 8px 16px;
+            border-radius: var(--radius-full);
+            margin-bottom: 18px;
+        }
+
+        .gate-hint-pill .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #2ecc71;
+            animation: gateHintPulse 1.6s infinite;
+        }
+
+        @keyframes gateHintPulse {
+            0% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(46, 204, 113, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
         }
 
         .filter-group {
@@ -1653,7 +1776,7 @@
         }
 
         .msg-sent .msg-bubble-content {
-            background: linear-gradient(135deg, var(--primary), #B5525F);
+            background: linear-gradient(135deg, var(--primary), #ff6b8b);
             color: white;
             border-radius: var(--radius-md) 0 var(--radius-md) var(--radius-md);
         }
@@ -1792,7 +1915,7 @@
         }
 
         .danger-zone {
-            border: 1px solid var(--danger);
+            border: 1px solid #ff7675;
             background-color: rgba(255, 118, 117, 0.05);
             padding: 24px;
             border-radius: var(--radius-sm);
@@ -1845,7 +1968,7 @@
 
         .price-amt {
             font-size: 2.5rem;
-            font-weight: 600;
+            font-weight: 800;
         }
 
         .pricing-features-list {
@@ -1868,8 +1991,7 @@
         .nav-links { display: none; }
         .hero-section { flex-direction: column; text-align: center; padding-top: 24px; }
         .hero-graphics { order: -1; margin-bottom: 32px; }
-        .hero-content::before { margin-left: auto; margin-right: auto; }
-        .hero-content h1 { font-size: 2.1rem; }
+        .hero-content h1 { font-size: 1.9rem; }
         .safety-section { flex-direction: column; }
         .chat-sidebar { display: flex; }
         .settings-container { grid-template-columns: 100%; }
@@ -1879,9 +2001,9 @@
 
         /* --- Phone-frame presentation on wider screens --- */
         @media (min-width: 481px) {
-            html { background-color: #E4DACD; }
-            [data-theme="dark"] { background-color: #0D0A0B; }
-            body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(43,23,20,0.25); min-height: 100vh; }
+            html { background-color: #dfe3e8; }
+            [data-theme="dark"] { background-color: #05060a; }
+            body { max-width: 480px; margin: 0 auto; box-shadow: 0 0 60px rgba(0,0,0,0.25); min-height: 100vh; }
             .navbar, .mobile-nav {
                 left: 50%;
                 right: auto;
@@ -1966,7 +2088,7 @@
             
 
 
-            <p id="authErrorMsg" style="display:none; color:var(--danger); font-size:0.85rem; margin-bottom:14px; text-align:center;"></p>
+            <p id="authErrorMsg" style="display:none; color:#ff4b72; font-size:0.85rem; margin-bottom:14px; text-align:center;"></p>
 
             <form id="authForm" onsubmit="handleAuthSubmit(event)">
                 <div class="form-group" id="authNameGroup" style="display:none;">
@@ -1979,7 +2101,10 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" class="form-control" id="auth-password" required placeholder="•••••••• (min 8 characters)" minlength="8">
+                    <div class="password-field">
+                        <input type="password" class="form-control" id="auth-password" required placeholder="•••••••• (min 8 characters)" minlength="8">
+                        <button type="button" class="password-toggle-btn" tabindex="-1" aria-label="Show password" onclick="togglePasswordVisibility('auth-password', this)"><i class="fa-solid fa-eye"></i></button>
+                    </div>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width:100%; margin-top:10px;" id="authSubmitBtn">Get Started</button>
             </form>
@@ -2197,7 +2322,14 @@
                         </div>
                         <div class="form-group">
                             <label class="form-label">Date of Birth</label>
-                            <input type="date" class="form-control" id="ob-dob" required>
+                            <div class="scroll-date-picker" id="scrollDobPicker">
+                                <div class="scroll-date-highlight"></div>
+                                <div class="scroll-date-col" id="dobDayCol"></div>
+                                <div class="scroll-date-col" id="dobMonthCol"></div>
+                                <div class="scroll-date-col" id="dobYearCol"></div>
+                            </div>
+                            <input type="hidden" id="ob-dob">
+                            <p style="color:var(--text-muted); font-size:0.8rem; margin-top:8px; text-align:center;">Scroll to set your birth date — you must be 18+ to join.</p>
                         </div>
                         <div class="form-group">
                             <label class="form-label">Your Gender</label>
@@ -2304,7 +2436,7 @@
                             <div><h3 id="dash-likes-count">0</h3><p style="color:var(--text-muted); font-size:0.9rem;">Received Likes</p></div>
                         </div>
                         <div class="stat-card">
-                            <div class="stat-icon" style="background-color:rgba(70, 84, 140, 0.1); color:var(--secondary)"><i class="fa-solid fa-percent"></i></div>
+                            <div class="stat-icon" style="background-color:rgba(108, 92, 231, 0.1); color:var(--secondary)"><i class="fa-solid fa-percent"></i></div>
                             <div>
                                 <div style="display:flex; align-items:center; gap:10px;">
                                     <h3 id="dash-completion-pct">0%</h3>
@@ -2392,6 +2524,15 @@
             <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%;">
                 <!-- Shown to non-Premium members instead of the real matches grid -->
                 <div class="premium-gate" id="matchesPremiumGate" style="display:none;">
+                    <div class="gate-ghost-row">
+                        <div class="gate-ghost-avatar"></div>
+                        <div class="gate-ghost-avatar"></div>
+                        <div class="gate-ghost-avatar"></div>
+                    </div>
+                    <div class="gate-hint-pill" id="matchesGateHint" style="display:none;">
+                        <span class="pulse-dot"></span>
+                        <span id="matchesGateHintText"></span>
+                    </div>
                     <i class="fa-solid fa-lock gate-icon"></i>
                     <h3>Matches Are a Premium Feature</h3>
                     <p style="color:var(--text-muted); margin-top:10px;">Upgrade your plan to see who you've matched with and start conversations.</p>
@@ -2412,6 +2553,15 @@
             <div class="main-content-panel" style="max-width:1200px; margin:0 auto; width:100%; padding:20px 0;">
                 <!-- Shown to non-Premium members instead of the real chat UI -->
                 <div class="premium-gate" id="messagesPremiumGate" style="display:none;">
+                    <div class="gate-ghost-row">
+                        <div class="gate-ghost-avatar"></div>
+                        <div class="gate-ghost-avatar"></div>
+                        <div class="gate-ghost-avatar"></div>
+                    </div>
+                    <div class="gate-hint-pill" id="messagesGateHint" style="display:none;">
+                        <span class="pulse-dot"></span>
+                        <span id="messagesGateHintText"></span>
+                    </div>
                     <i class="fa-solid fa-lock gate-icon"></i>
                     <h3>Chat Is a Premium Feature</h3>
                     <p style="color:var(--text-muted); margin-top:10px;">Upgrade your plan to message your matches.</p>
@@ -2659,9 +2809,9 @@
                             </div>
                             
                             <div class="danger-zone">
-                                <h4 style="color:var(--danger); margin-bottom:8px;">Danger Zone Management</h4>
+                                <h4 style="color:#ff7675; margin-bottom:8px;">Danger Zone Management</h4>
                                 <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:16px;">Deleting your account permanently removes your profile, matches, and message history. This action cannot be undone.</p>
-                                <button class="btn" style="background-color:var(--danger); color:white;" onclick="deleteAccountPermanently()">Delete Profile Permanently</button>
+                                <button class="btn" style="background-color:#ff7675; color:white;" onclick="deleteAccountPermanently()">Delete Profile Permanently</button>
                             </div>
                         </div>
                     </div>
@@ -2816,11 +2966,13 @@
 
             if (viewId === 'dashboard') renderDashboardData();
             if (viewId === 'discover') loadDiscoverDeck();
+            if (viewId === 'onboarding') initScrollDobPicker();
             if (viewId === 'matches') {
                 const unlocked = !!(state.user && state.user.isPremium);
                 document.getElementById('matchesPremiumGate').style.display = unlocked ? 'none' : 'block';
                 document.getElementById('matchesContent').style.display = unlocked ? 'block' : 'none';
                 if (unlocked) renderMatchesGrid();
+                else updateGateHint('matches');
             }
             if (viewId === 'messages') {
                 const unlocked = !!(state.user && state.user.isPremium);
@@ -2830,6 +2982,8 @@
                     renderConversationsList();
                     document.querySelector('.chat-sidebar').style.display = "flex";
                     document.getElementById('activeChatWindow').style.display = "none";
+                } else {
+                    updateGateHint('messages');
                 }
             }
             if (viewId === 'settings') populateSettingsForm();
@@ -2947,7 +3101,7 @@
 
         function fallbackAvatar(name) {
             const initial = (name || '?').charAt(0).toUpperCase();
-            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="#8C2F39"/><text x="50%" y="55%" font-family="sans-serif" font-size="90" fill="white" text-anchor="middle" dominant-baseline="middle">${initial}</text></svg>`;
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200"><rect width="100%" height="100%" fill="#ff4b72"/><text x="50%" y="55%" font-family="sans-serif" font-size="90" fill="white" text-anchor="middle" dominant-baseline="middle">${initial}</text></svg>`;
             return `data:image/svg+xml;base64,${btoa(svg)}`;
         }
 
@@ -2979,6 +3133,139 @@
 
         function isPremiumUser() {
             return !!(state.user && state.user.isPremium);
+        }
+
+        /* ---------------- PASSWORD PREVIEW TOGGLE ---------------- */
+        function togglePasswordVisibility(inputId, btn) {
+            const input = document.getElementById(inputId);
+            if (!input) return;
+            const willShow = input.type === 'password';
+            input.type = willShow ? 'text' : 'password';
+            const icon = btn.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', !willShow);
+                icon.classList.toggle('fa-eye-slash', willShow);
+            }
+            btn.setAttribute('aria-label', willShow ? 'Hide password' : 'Show password');
+        }
+
+        /* ---------------- PREMIUM GATE — LIVE HINT ---------------- */
+        async function updateGateHint(gateType) {
+            const hintEl = document.getElementById(gateType === 'matches' ? 'matchesGateHint' : 'messagesGateHint');
+            const textEl = document.getElementById(gateType === 'matches' ? 'matchesGateHintText' : 'messagesGateHintText');
+            if (!hintEl || !textEl || !state.user) return;
+            try {
+                const stats = await apiFetch('/api/stats');
+                const count = stats.totalMatches || 0;
+                if (count > 0) {
+                    textEl.innerText = gateType === 'matches'
+                        ? `You already have ${count} mutual match${count > 1 ? 'es' : ''} waiting`
+                        : `${count} match${count > 1 ? 'es are' : ' is'} ready to chat with you`;
+                    hintEl.style.display = 'inline-flex';
+                } else {
+                    hintEl.style.display = 'none';
+                }
+            } catch (err) {
+                hintEl.style.display = 'none';
+            }
+        }
+
+        /* ---------------- SCROLLABLE DATE-OF-BIRTH PICKER ---------------- */
+        const DOB_ROW_HEIGHT = 40;
+        let dobPickerBuilt = false;
+
+        function initScrollDobPicker() {
+            const dayCol = document.getElementById('dobDayCol');
+            const monthCol = document.getElementById('dobMonthCol');
+            const yearCol = document.getElementById('dobYearCol');
+            if (!dayCol || !monthCol || !yearCol) return;
+
+            if (!dobPickerBuilt) {
+                const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const thisYear = new Date().getFullYear();
+                const maxYear = thisYear - 18; // must be 18+
+                const minYear = thisYear - 100;
+
+                const buildItemsHtml = (pairs) => `<div class="scroll-pad"></div>` +
+                    pairs.map(([label, value]) => `<div class="scroll-item" data-value="${value}">${label}</div>`).join('') +
+                    `<div class="scroll-pad"></div>`;
+
+                dayCol.innerHTML = buildItemsHtml(Array.from({ length: 31 }, (_, i) => {
+                    const d = String(i + 1).padStart(2, '0');
+                    return [d, d];
+                }));
+                monthCol.innerHTML = buildItemsHtml(months.map((m, i) => [m, String(i + 1).padStart(2, '0')]));
+
+                const years = [];
+                for (let y = maxYear; y >= minYear; y--) years.push(y);
+                yearCol.innerHTML = buildItemsHtml(years.map(y => [String(y), String(y)]));
+
+                [dayCol, monthCol, yearCol].forEach(col => {
+                    col.addEventListener('scroll', () => onDobColumnScroll(col), { passive: true });
+                });
+
+                dayCol.dataset.defaultValue = '01';
+                monthCol.dataset.defaultValue = '01';
+                yearCol.dataset.defaultValue = String(thisYear - 25);
+
+                dobPickerBuilt = true;
+            }
+
+            // Position (or re-position) each column now that the picker is actually visible/laid out.
+            requestAnimationFrame(() => {
+                [dayCol, monthCol, yearCol].forEach(col => {
+                    if (col.dataset.positioned === 'true') {
+                        snapDobColumnToNearest(col, false);
+                        return;
+                    }
+                    const items = Array.from(col.querySelectorAll('.scroll-item'));
+                    const idx = Math.max(0, items.findIndex(it => it.dataset.value === col.dataset.defaultValue));
+                    col.scrollTop = idx * DOB_ROW_HEIGHT;
+                    highlightDobActiveItem(col);
+                    col.dataset.positioned = 'true';
+                });
+                updateDobHiddenValue();
+            });
+        }
+
+        function onDobColumnScroll(col) {
+            highlightDobActiveItem(col);
+            clearTimeout(col._dobSnapTimer);
+            col._dobSnapTimer = setTimeout(() => {
+                snapDobColumnToNearest(col, true);
+                updateDobHiddenValue();
+            }, 120);
+        }
+
+        function getDobNearestIndex(col) {
+            const items = col.querySelectorAll('.scroll-item');
+            const idx = Math.round(col.scrollTop / DOB_ROW_HEIGHT);
+            return Math.max(0, Math.min(items.length - 1, idx));
+        }
+
+        function highlightDobActiveItem(col) {
+            const items = col.querySelectorAll('.scroll-item');
+            const idx = getDobNearestIndex(col);
+            items.forEach((it, i) => it.classList.toggle('active', i === idx));
+        }
+
+        function snapDobColumnToNearest(col, smooth) {
+            const idx = getDobNearestIndex(col);
+            col.scrollTo({ top: idx * DOB_ROW_HEIGHT, behavior: smooth ? 'smooth' : 'auto' });
+            highlightDobActiveItem(col);
+        }
+
+        function updateDobHiddenValue() {
+            const dayCol = document.getElementById('dobDayCol');
+            const monthCol = document.getElementById('dobMonthCol');
+            const yearCol = document.getElementById('dobYearCol');
+            const dobInput = document.getElementById('ob-dob');
+            if (!dayCol || !monthCol || !yearCol || !dobInput) return;
+            const dayItem = dayCol.querySelectorAll('.scroll-item')[getDobNearestIndex(dayCol)];
+            const monthItem = monthCol.querySelectorAll('.scroll-item')[getDobNearestIndex(monthCol)];
+            const yearItem = yearCol.querySelectorAll('.scroll-item')[getDobNearestIndex(yearCol)];
+            if (!dayItem || !monthItem || !yearItem) return;
+            dobInput.value = `${yearItem.dataset.value}-${monthItem.dataset.value}-${dayItem.dataset.value}`;
         }
 
         /* ---------------- ONBOARDING ---------------- */
